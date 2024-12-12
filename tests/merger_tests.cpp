@@ -28,8 +28,8 @@ TEST(Merger, CanMergeTwoBelts) {
     belt3->connectInput(0, mg, 0);
     m3->connectInput(0, belt3, 0);
 
-    m1->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
-    m2->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
+    m1->getOutputStack(0)->addAmount(1, Resource::IronOre);
+    m2->getOutputStack(0)->addAmount(1, Resource::IronOre);
 
     w.advanceBy(4 * 1000, [&]() {
         EXPECT_EQ(m3->getInputStack(0)->getAmount(), 2);

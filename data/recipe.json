@@ -1,0 +1,354 @@
+[
+    {
+        "id": "IronIngot",
+        "produced_in": "Smelter",
+        "time": 2,
+        "unlocked_by": "Onboarding",
+        "inputs": [
+            {
+                "resource": "IronOre",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "IronIngot",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "IronPlate",
+        "produced_in": "Constructor",
+        "time": 6,
+        "unlocked_by": "Onboarding",
+        "inputs": [
+            {
+                "resource": "IronIngot",
+                "amount": 3
+            }
+        ],
+        "products": [
+            {
+                "resource": "IronPlate",
+                "amount": 2
+            }
+        ]
+    },
+    {
+        "id": "IronRod",
+        "produced_in": "Constructor",
+        "time": 4,
+        "unlocked_by": "Onboarding",
+        "inputs": [
+            {
+                "resource": "IronIngot",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "IronRod",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "Wire",
+        "produced_in": "Constructor",
+        "time": 4,
+        "unlocked_by": "Onboarding",
+        "inputs": [
+            {
+                "resource": "CopperIngot",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "Wire",
+                "amount": 2
+            }
+        ]
+    },
+    {
+        "id": "Cable",
+        "produced_in": "Constructor",
+        "time": 2,
+        "unlocked_by": "Tier 0 - HUB Upgrade 2",
+        "inputs": [
+            {
+                "resource": "Wire",
+                "amount": 2
+            }
+        ],
+        "products": [
+            {
+                "resource": "Cable",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "Concrete",
+        "produced_in": "Constructor",
+        "time": 4,
+        "unlocked_by": "Tier 0 - HUB Upgrade 3",
+        "inputs": [
+            {
+                "resource": "Limestone",
+                "amount": 3
+            }
+        ],
+        "products": [
+            {
+                "resource": "Concrete",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "CopperIngot",
+        "produced_in": "Smelter",
+        "time": 2,
+        "unlocked_by": "Tier 0 - HUB Upgrade 2",
+        "inputs": [
+            {
+                "resource": "CopperOre",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "CopperIngot",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "ReinforcedIronPlate",
+        "produced_in": "Constructor",
+        "time": 12,
+        "unlocked_by": "Tier 0 - HUB Upgrade 3",
+        "inputs": [
+            {
+                "resource": "IronPlate",
+                "amount": 6
+            },
+            {
+                "resource": "Screw",
+                "amount": 12
+            }
+        ],
+        "products": [
+            {
+                "resource": "ReinforcedIronPlate",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "Screw",
+        "produced_in": "Constructor",
+        "time": 6,
+        "unlocked_by": "Tier 0 - HUB Upgrade 3",
+        "inputs": [
+            {
+                "resource": "IronRod",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "Screw",
+                "amount": 4
+            }
+        ]
+    },
+    {
+        "id": "Wire",
+        "produced_in": "Constructor",
+        "time": 4,
+        "unlocked_by": "Tier 0 - HUB Upgrade 2",
+        "inputs": [
+            {
+                "resource": "CopperIngot",
+                "amount": 1
+            }
+        ],
+        "products": [
+            {
+                "resource": "Wire",
+                "amount": 2
+            }
+        ]
+    },
+    {
+        "id": "CopperSheet",
+        "produced_in": "Constructor",
+        "time": 6,
+        "unlocked_by": "Tier 2 - Part Assembly",
+        "inputs": [
+            {
+                "resource": "CopperIngot",
+                "amount": 2
+            }
+        ],
+        "products": [
+            {
+                "resource": "CopperSheet",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "ModularFrame",
+        "produced_in": "Assembler",
+        "time": 60,
+        "unlocked_by": "Tier 2 - Part Assembly",
+        "inputs": [
+            {
+                "resource": "ReinforcedIronPlate",
+                "amount": 3
+            },
+            {
+                "resource": "IronRod",
+                "amount": 12
+            }
+        ],
+        "products": [
+            {
+                "resource": "ModularFrame",
+                "amount": 2
+            }
+        ]
+    },
+    {
+        "id": "Rotor",
+        "produced_in": "Assembler",
+        "time": 15,
+        "unlocked_by": "Tier 2 - Part Assembly",
+        "inputs": [
+            {
+                "resource": "IronRod",
+                "amount": 5
+            },
+            {
+                "resource": "Screw",
+                "amount": 25
+            }
+        ],
+        "products": [
+            {
+                "resource": "Rotor",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "SolidBiofuel",
+        "produced_in": "Constructor",
+        "time": 4,
+        "unlocked_by": "Tier 2 - Obstacle Clearing",
+        "inputs": [
+            {
+                "resource": "Biomass",
+                "amount": 8
+            }
+        ],
+        "products": [
+            {
+                "resource": "SolidBiofuel",
+                "amount": 4
+            }
+        ]
+    },
+    {
+        "id": "AutomatedWiring",
+        "produced_in": "Assembler",
+        "time": 24,
+        "unlocked_by": "Tier 4 - Advanced Steel Production",
+        "inputs": [
+            {
+                "resource": "Stator",
+                "amount": 1
+            },
+            {
+                "resource": "Cable",
+                "amount": 20
+            }
+        ],
+        "products": [
+            {
+                "resource": "AutomatedWiring",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "EncasedIndustrialBeam",
+        "produced_in": "Assembler",
+        "time": 10,
+        "unlocked_by": "Tier 4 - Advanced Steel Production",
+        "inputs": [
+            {
+                "resource": "SteelBeam",
+                "amount": 3
+            },
+            {
+                "resource": "Concrete",
+                "amount": 6
+            }
+        ],
+        "products": [
+            {
+                "resource": "EncasedIndustrialBeam",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "Motor",
+        "produced_in": "Assembler",
+        "time": 12,
+        "unlocked_by": "Tier 4 - Advanced Steel Production",
+        "inputs": [
+            {
+                "resource": "Rotor",
+                "amount": 2
+            },
+            {
+                "resource": "Stator",
+                "amount": 2
+            }
+        ],
+        "products": [
+            {
+                "resource": "Motor",
+                "amount": 1
+            }
+        ]
+    },
+    {
+        "id": "Stator",
+        "produced_in": "Assembler",
+        "time": 12,
+        "unlocked_by": "Tier 4 - Advanced Steel Production",
+        "inputs": [
+            {
+                "resource": "SteelPipe",
+                "amount": 3
+            },
+            {
+                "resource": "Wire",
+                "amount": 8
+            }
+        ],
+        "products": [
+            {
+                "resource": "Stator",
+                "amount": 1
+            }
+        ]
+    }
+]

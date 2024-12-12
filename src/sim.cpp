@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <thread>
 #include <iostream>
-#include <gtest/internal/gtest-internal.h>
 
 using namespace Fac;
 

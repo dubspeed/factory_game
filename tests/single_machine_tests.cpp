@@ -6,8 +6,8 @@ using namespace Fac;
 TEST(SingleMachineTests, CheckAndStartProcessing) {
     auto m = SingleMachine();
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     m._checkAndStartProcessing();
@@ -30,8 +30,8 @@ TEST(SingleMachineTests, CheckAndStartProcessing) {
 TEST(SingleMachineTests, CanProduce) {
     auto m = SingleMachine();
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     EXPECT_EQ(m._canStartProduction(), false);

@@ -1,0 +1,7 @@
+{
+  "name": "Factory Game",
+   "directories": {
+	"schemas": "schemas",
+    	"data": "data"
+   }
+}

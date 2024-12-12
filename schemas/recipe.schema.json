@@ -1,0 +1,65 @@
+{
+	"title":"Recipe",
+	"schema": {
+		"title": "Recipe",
+		"description": "A recipe for a machine",
+		"type": "object",
+		"required": ["id", "inputs", "time", "products"],
+		"properties": {
+			"id": { 
+				"type": "string",
+				"$ref": "/types/resources.json"
+			},
+			"inputs": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"required": ["amount", "resource"],
+					"properties": {
+						"amount": {
+							"type": "number",
+							"minimum": 0
+						},
+						"resource": {
+							"type": "string",
+							"$ref": "/types/resources.json"
+						}
+					},
+					"additionalProperties": false
+				},
+				"minItems": 1
+			},
+			"time": {
+				"type": "number",
+				"minimum": 0
+			},
+			"unlocked_by": {
+				"type": "string",
+				"minimum": 0
+			},
+			"produced_in": {
+				"type": "string",
+				"minimum": 0
+			},
+			"products": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"required": ["amount", "resource"],
+					"properties": {
+						"amount": {
+							"type": "number",
+							"minimum": 0
+						},
+						"resource": {
+							"type": "string",
+							"$ref": "/types/resources.json"
+						}
+					},
+					"additionalProperties": false
+				},
+				"minItems": 1
+			}
+		}
+	}
+}

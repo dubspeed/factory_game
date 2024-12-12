@@ -4,15 +4,15 @@ using namespace Fac;
 
 TEST(RecipeTests, Recipe) {
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     EXPECT_EQ(r.inputs[0].amount, 5);
     EXPECT_EQ(r.products[0].amount, 1);
     EXPECT_EQ(r.processing_time_s, 4);
-    EXPECT_EQ(r.inputs[0].resource, Resource::Iron_Ore);
-    EXPECT_EQ(r.products[0].resource, Resource::Iron_Ingots);
+    EXPECT_EQ(r.inputs[0].resource, Resource::IronOre);
+    EXPECT_EQ(r.products[0].resource, Resource::IronIngot);
 }
 
 TEST(RecipeTests, InAMachine) {
@@ -28,8 +28,8 @@ TEST(RecipeTests, SimpleProductionCheckWithTime) {
     // Setup a single smelter
     const auto m = std::make_shared<SingleMachine>(SingleMachine());
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     w.addEntity(m);
@@ -55,8 +55,8 @@ TEST(RecipeTests, LetsPassTime) {
     const auto m = std::make_shared<SingleMachine>(SingleMachine());
 
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
 

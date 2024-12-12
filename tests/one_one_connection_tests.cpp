@@ -17,7 +17,7 @@ TEST(OneToOneConnectionTest, CanConnectAndMoveItems) {
     // this should move the item from m1 to the belt
     EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
     EXPECT_EQ(belt->_in_transit_stack.size(), 1);
-    EXPECT_EQ(belt->_in_transit_stack[0], Resource::Iron_Ingots);
+    EXPECT_EQ(belt->_in_transit_stack[0], Resource::IronIngot);
     EXPECT_TRUE(m2->getInputStack(0)->isEmpty());
     EXPECT_TRUE(belt->getActive());
     EXPECT_FALSE(belt->getJammed());

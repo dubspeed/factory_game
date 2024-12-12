@@ -7,17 +7,17 @@ using namespace Fac;
 
 TEST(JSON, AStack) {
     auto s = Stack();
-    s.addAmount(10, Resource::Iron_Ore);
+    s.addAmount(10, Resource::IronOre);
     json j = s;
     auto const s2 = j.get<Stack>();
     EXPECT_EQ(s2.getAmount(), 10);
-    EXPECT_EQ(s2.getResource(), Resource::Iron_Ore);
+    EXPECT_EQ(s2.getResource(), Resource::IronOre);
 }
 
 TEST(JSON, RecipeTest) {
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     json j = r;
@@ -25,21 +25,21 @@ TEST(JSON, RecipeTest) {
     EXPECT_EQ(r2.inputs[0].amount, 5);
     EXPECT_EQ(r2.products[0].amount, 1);
     EXPECT_EQ(r2.processing_time_s, 4);
-    EXPECT_EQ(r2.inputs[0].resource, Resource::Iron_Ore);
-    EXPECT_EQ(r2.products[0].resource, Resource::Iron_Ingots);
-    // std::cout << j.dump(4) << std::endl;
+    EXPECT_EQ(r2.inputs[0].resource, Resource::IronOre);
+    EXPECT_EQ(r2.products[0].resource, Resource::IronIngot);
+    std::cout << j.dump(4) << std::endl;
 }
 
 TEST(JSON, SingleMachine) {
     auto m = SingleMachine();
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     m.setRecipe(r);
-    m.getInputStack(0)->addAmount(10, Resource::Iron_Ore);
-    m.getOutputStack(0)->addAmount(33, Resource::Iron_Ingots);
+    m.getInputStack(0)->addAmount(10, Resource::IronOre);
+    m.getOutputStack(0)->addAmount(33, Resource::IronIngot);
     json j = m;
     // std::cout << j.dump(4) << std::endl;
     auto const m2 = j.get<SingleMachine>();
@@ -52,24 +52,24 @@ TEST(JSON, SingleMachine) {
 
     // Input Stack
     EXPECT_EQ(m2.getInputStack(0)->getAmount(), 10);
-    EXPECT_EQ(m2.getInputStack(0)->getResource(), Resource::Iron_Ore);
+    EXPECT_EQ(m2.getInputStack(0)->getResource(), Resource::IronOre);
 
     // Output Stack
     EXPECT_EQ(m2.getOutputStack(0)->getAmount(), 33);
-    EXPECT_EQ(m2.getOutputStack(0)->getResource(), Resource::Iron_Ingots);
+    EXPECT_EQ(m2.getOutputStack(0)->getResource(), Resource::IronIngot);
 }
 
 TEST(JSON, LinkedStacks) {
     auto m = std::make_shared<SingleMachine>();
     auto b = std::make_shared<Belt>(1);
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     m->setRecipe(r);
     b->connectInput(0, m, 0);
-    m->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
+    m->getOutputStack(0)->addAmount(1, Resource::IronOre);
     json j;
     j["machines"] = *m;
     j["belts"] = *b;
@@ -86,7 +86,7 @@ TEST(JSON, LinkedStacks) {
     EXPECT_EQ(m2->getId(), m->getId());
     EXPECT_EQ(m2->getRecipe().value().inputs[0].amount, 5);
     EXPECT_EQ(b2->getInputStack(0).get()->getAmount(), 1);
-    EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::Iron_Ore);
+    EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::IronOre);
 }
 
 TEST(JSON, GameWorld) {
@@ -94,13 +94,13 @@ TEST(JSON, GameWorld) {
     auto m = std::make_shared<SingleMachine>();
     auto b = std::make_shared<Belt>(1);
     Recipe r = {
-        .inputs = {{Resource::Iron_Ore, 5}},
-        .products = {{Resource::Iron_Ingots, 1}},
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
         .processing_time_s = 4
     };
     m->setRecipe(r);
     b->connectInput(0, m, 0);
-    m->getOutputStack(0)->addAmount(1, Resource::Iron_Ingots);
+    m->getOutputStack(0)->addAmount(1, Resource::IronIngot);
     w.addEntity(m);
     w.addEntity(b);
     json j = w;
@@ -114,5 +114,5 @@ TEST(JSON, GameWorld) {
     EXPECT_EQ(m2->getId(), m->getId());
     EXPECT_EQ(m2->getRecipe().value().inputs[0].amount, 5);
     EXPECT_EQ(b2->getInputStack(0).get()->getAmount(), 1);
-    EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::Iron_Ingots);
+    EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::IronIngot);
 }

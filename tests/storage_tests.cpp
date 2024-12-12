@@ -14,7 +14,7 @@ TEST(Storage, CanStoreOneItem) {
     w.addEntity(b);
     w.addEntity(s);
 
-    m->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
+    m->getOutputStack(0)->addAmount(1, Resource::IronOre);
     b->connectInput(0, m, 0);
     s->connectInput(0, b, 0);
 
@@ -22,7 +22,7 @@ TEST(Storage, CanStoreOneItem) {
         EXPECT_EQ(m->getOutputStack(0)->getAmount(), 0);
         EXPECT_EQ(b->_in_transit_stack.size(), 0);
         EXPECT_EQ(s->getInputStack(0)->getAmount(), 0);
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), 1);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), 1);
     });
 }
 
@@ -37,17 +37,17 @@ TEST(Storage, CanStoreMultipleItems) {
     w.addEntity(b);
     w.addEntity(s);
 
-    m->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
+    m->getOutputStack(0)->addAmount(1, Resource::IronOre);
     b->connectInput(0, m, 0);
     s->connectInput(0, b, 0);
 
     w.advanceBy(2 * 1000, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), 1);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), 1);
     });
-    m->getOutputStack(0)->addAmount(1, Resource::Copper_Cable);
+    m->getOutputStack(0)->addAmount(1, Resource::Cable);
     w.advanceBy(2 * 1000, [&]() {
         EXPECT_FALSE(b->getJammed());
-        EXPECT_EQ(s->getAmount(Resource::Copper_Cable), 1);
+        EXPECT_EQ(s->getAmount(Resource::Cable), 1);
     });
 }
 
@@ -57,21 +57,21 @@ TEST(Storage, CanNotStoreMoreWhenFull) {
     s->setMaxItemStacks(1);
     w.addEntity(s);
 
-    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::Iron_Ore);
+    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
 
     w.advanceBy(100, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), MAX_STACK_SIZE);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), MAX_STACK_SIZE);
     });
     // now we can't store more
 
-    s->getInputStack(0)->addAmount(1, Resource::Iron_Ore);
+    s->getInputStack(0)->addAmount(1, Resource::IronOre);
     w.advanceBy(100, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), MAX_STACK_SIZE);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), MAX_STACK_SIZE);
     });
 
-    s->getInputStack(0)->addAmount(1, Resource::Copper_Cable);
+    s->getInputStack(0)->addAmount(1, Resource::Cable);
     w.advanceBy(100, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Copper_Cable), 0);
+        EXPECT_EQ(s->getAmount(Resource::Cable), 0);
     });
 }
 
@@ -81,15 +81,15 @@ TEST(Storage, CanStoreMoreStacksOfTheSameItem) {
     s->setMaxItemStacks(2);
     w.addEntity(s);
 
-    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::Iron_Ore);
+    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
 
     // The input stack will be consumed 1 per frame
     w.advanceBy(100, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), MAX_STACK_SIZE);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), MAX_STACK_SIZE);
     });
 
-    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::Iron_Ore);
+    s->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
     w.advanceBy(100, [&]() {
-        EXPECT_EQ(s->getAmount(Resource::Iron_Ore), MAX_STACK_SIZE * 2);
+        EXPECT_EQ(s->getAmount(Resource::IronOre), MAX_STACK_SIZE * 2);
     });
 }

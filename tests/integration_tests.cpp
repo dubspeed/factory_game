@@ -18,7 +18,7 @@ TEST(TwoMachineProductionChain, WithSimpleBelt) {
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::Iron_Ore);
+    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
     EXPECT_TRUE(m2->getOutputStack(0)->isEmpty());
 
     // first ingot is produced
@@ -62,7 +62,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
     const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
     const auto e1 = std::make_shared<ResourceExtractor>(ResourceExtractor());
 
-    n1->setResource(Resource::Iron_Ore, ResourceQuality::Normal);
+    n1->setResource(Resource::IronOre, ResourceQuality::Normal);
     // belt between extractor and machine
     const auto belt1 = std::make_shared<Belt>(Belt(1));
 

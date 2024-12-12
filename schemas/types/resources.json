@@ -1,0 +1,35 @@
+{
+    "title": "Resources",
+    "type": "string",
+    "enum": [
+	    "CopperOre",
+	    "CopperIngot",
+	    "IronOre",
+	    "IronIngot",
+	    "IronPlate",
+	    "IronRod",
+	    "Wire",
+	    "Cable",
+	    "Concrete",
+	    "Screw",
+	    "ReinforcedIronPlate",
+	    "ModularFrame",
+	    "Rotor",
+	    "SmartPlating",
+	    "SteelIngot",
+	    "SteelPipe",
+	    "VersatileFramework",
+	    "SolidBiofuel",
+	    "Leaves",
+	    "Wood",
+	    "Biomass",
+	    "Limestone",
+	    "CopperSheet",
+	    "Stator",
+	    "AutomatedWiring",
+	    "SteelBeam",
+	    "EncasedIndustrialBeam",
+	    "Motor"
+    ]
+}
+
