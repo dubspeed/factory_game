@@ -5,11 +5,15 @@ using namespace Fac;
 
 TEST(SingleMachineTests, CheckAndStartProcessing) {
     auto m = SingleMachine();
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     m._checkAndStartProcessing();
     EXPECT_EQ(m.processing, false);
     m.setRecipe(r);
-    m.getInputStack(0)->addAmount(5, r.r_in);
+    m.getInputStack(0)->addAmount(5, r.inputs[0].resource);
     m.processing_progress = 1.0;
     m.processing = false;
     m._checkAndStartProcessing();
@@ -25,13 +29,17 @@ TEST(SingleMachineTests, CheckAndStartProcessing) {
 
 TEST(SingleMachineTests, CanProduce) {
     auto m = SingleMachine();
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     EXPECT_EQ(m._canStartProduction(), false);
     m.setRecipe(r);
     EXPECT_FALSE(m._canStartProduction());
-    m.getInputStack(0)->addAmount(5, r.r_in);
+    m.getInputStack(0)->addAmount(5, r.inputs[0].resource);
     EXPECT_TRUE(m._canStartProduction());
-    m.getOutputStack(0)->addAmount(MAX_STACK_SIZE, r.r_out);
+    m.getOutputStack(0)->addAmount(MAX_STACK_SIZE, r.products[0].resource);
     EXPECT_FALSE(m._canStartProduction());
     m.getOutputStack(0)->clear();
     m.processing_progress = r.processing_time_s * 1000;

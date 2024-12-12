@@ -12,7 +12,7 @@ TEST(Splitter, ShouldDoSomeSplitting) {
     auto m3 = std::make_shared<SingleMachine>(SingleMachine());
 
     m1->setRecipe(recipe_iron_ingots);
-    m1->getInputStack(0)->addAmount(2, recipe_iron_ingots.r_in);
+    m1->getInputStack(0)->addAmount(2, recipe_iron_ingots.inputs[0].resource);
     m2->setRecipe(recipe_iron_plates);
     m3->setRecipe(recipe_iron_plates);
 

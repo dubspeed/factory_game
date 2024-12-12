@@ -22,7 +22,7 @@ TEST(Belt, ConnectTwoBelts) {
     m1->setRecipe(recipe_iron_ingots);
     m2->setRecipe(recipe_iron_plates);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.r_in);
+    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
 
     w.advanceBy(5 * 60 * 1000, [&]() {
@@ -64,7 +64,7 @@ TEST(Belt, ConnectTenBelts) {
     belts[NUM_BELTS-1]->connectInput(0, belts[NUM_BELTS-2], 0);
     m2->connectInput(0, belts[NUM_BELTS-1], 0);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.r_in);
+    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
 
     w.advanceBy(5 * 60 * 1000, [&]() {

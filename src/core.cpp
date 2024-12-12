@@ -8,7 +8,13 @@ static int _calculate_rpm(std::optional<int> const processing_time, std::optiona
     return rpm == 0 ? 0 : (60 / processing_time.value_or(0)) * amount.value_or(0);
 }
 
-void SingleMachine::setRecipe(std::optional<SingleRecipe> const &r) {
+void SingleMachine::setRecipe(std::optional<Recipe> const &r) {
+    if (r->inputs.size() > fixed_input_slots + 1) {
+        throw std::runtime_error("This machine only has one input slot");
+    }
+    if (r->products.size() > fixed_output_slots + 1) {
+        throw std::runtime_error("This machine only has one output slot");
+    }
     _active_recipe = r;
     auto const stack_in = getInputStack(0);
     auto const stack_out = getOutputStack(0);
@@ -16,20 +22,21 @@ void SingleMachine::setRecipe(std::optional<SingleRecipe> const &r) {
     if (stack_in == nullptr || stack_out == nullptr) {
         return;
     }
+
     stack_in->clear();
-    stack_in->lockResource(r->r_in);
+    stack_in->lockResource(r->inputs[fixed_input_slots].resource);
     stack_out->clear();
-    stack_out->lockResource(r->r_out);
+    stack_out->lockResource(r->inputs[fixed_input_slots].resource);
 }
 
-std::optional<SingleRecipe> SingleMachine::getRecipe() const {
+std::optional<Recipe> SingleMachine::getRecipe() const {
     return _active_recipe;
 }
 
 int SingleMachine::getInputRpm() const {
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
-        return _calculate_rpm(r.processing_time_s, r.amount_in);
+        return _calculate_rpm(r.processing_time_s, r.inputs[fixed_input_slots].amount);
     }
     return 0;
 }
@@ -37,7 +44,7 @@ int SingleMachine::getInputRpm() const {
 int SingleMachine::getOutputRpm() const {
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
-        return _calculate_rpm(r.processing_time_s, r.amount_out);
+        return _calculate_rpm(r.processing_time_s, r.products[fixed_output_slots].amount);
     }
     return 0;
 }
@@ -54,7 +61,7 @@ void SingleMachine::update(double const dt) {
 void SingleMachine::_checkAndStartProcessing() {
     if (!processing && _canStartProduction()) {
         auto const r = _active_recipe.value();
-        getInputStack(0)->removeAmount(r.amount_in);
+        getInputStack(0)->removeAmount(r.inputs[fixed_input_slots].amount);
         processing_progress = 0.0;
         processing = true;
     }
@@ -72,7 +79,7 @@ void SingleMachine::_checkAndFinishProduction() {
             // TODO what to do when output stack is full?
             // Idea: keep in a processing and add to output stack when it becomes available
         } else {
-            getOutputStack(0)->addAmount(r.amount_out, r.r_out);
+            getOutputStack(0)->addAmount(r.products[fixed_output_slots].amount, r.products[fixed_output_slots].resource);
         }
     }
 }
@@ -91,7 +98,7 @@ bool SingleMachine::_canStartProduction() const {
     if (!getInputStack(0) || !getOutputStack(0))
         return false;
 
-    if (getInputStack(0)->getAmount() < r.amount_in)
+    if (getInputStack(0)->getAmount() < r.inputs[fixed_input_slots].amount)
         return false;
 
     if (getOutputStack(0)->isFull())
@@ -111,7 +118,7 @@ void Fac::to_json(json &j, const SingleMachine &r) {
 }
 
 void Fac::from_json(const json &j, SingleMachine &r) {
-    r.setRecipe(j.at("machine").at("recipe").get<SingleRecipe>());
+    r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
     r.processing = j.at("machine").at("processing").get<bool>();
     r.processing_progress = j.at("machine").at("progress").get<double>();
     r._id = j.at("machine").at("id").get<int>();

@@ -2,31 +2,39 @@
 #include "../src/factory.h"
 using namespace Fac;
 
-TEST(RecipeTests, SingleRecipe) {
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
-    EXPECT_EQ(r.amount_in, 5);
-    EXPECT_EQ(r.amount_out, 1);
+TEST(RecipeTests, Recipe) {
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
+    EXPECT_EQ(r.inputs[0].amount, 5);
+    EXPECT_EQ(r.products[0].amount, 1);
     EXPECT_EQ(r.processing_time_s, 4);
-    EXPECT_EQ(r.r_in, Resource::Iron_Ore);
-    EXPECT_EQ(r.r_out, Resource::Iron_Ingots);
+    EXPECT_EQ(r.inputs[0].resource, Resource::Iron_Ore);
+    EXPECT_EQ(r.products[0].resource, Resource::Iron_Ingots);
 }
 
 TEST(RecipeTests, InAMachine) {
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    auto r = recipe_iron_ingots;
     auto m = SingleMachine();
     m.setRecipe(r);
-    EXPECT_EQ(m.getOutputRpm(), 15);
-    EXPECT_EQ(m.getInputRpm(), 75);
+    EXPECT_EQ(m.getOutputRpm(), 30);
+    EXPECT_EQ(m.getInputRpm(), 30);
 }
 
-TEST(RecipeTest, SimpleProductionCheckWithTime) {
+TEST(RecipeTests, SimpleProductionCheckWithTime) {
     auto w = GameWorld();
     // Setup a single smelter
     const auto m = std::make_shared<SingleMachine>(SingleMachine());
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     w.addEntity(m);
     m->setRecipe(r);
-    m->getInputStack(0)->addAmount(5, r.r_in);
+    m->getInputStack(0)->addAmount(5, r.inputs[0].resource);;
     for (auto i = 0; i < 4; i++) {
         w.update(1000);
         EXPECT_EQ(m->processing, true);
@@ -46,7 +54,11 @@ TEST(RecipeTests, LetsPassTime) {
     // Setup a single smelter
     const auto m = std::make_shared<SingleMachine>(SingleMachine());
 
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
 
     // Register the machine in the simulation
     w.addEntity(m);
@@ -55,7 +67,7 @@ TEST(RecipeTests, LetsPassTime) {
     m->setRecipe(r);
 
     // add some raw material
-    m->getInputStack(0)->addAmount(MAX_STACK_SIZE, r.r_in);
+    m->getInputStack(0)->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
 
     // move time to the future, by iterating via delta_t
     for (auto i = 0; i < 12001; i++) {
@@ -63,7 +75,7 @@ TEST(RecipeTests, LetsPassTime) {
         if (i % 4000 == 0) {
             // std::cout << "Time: " << i << std::endl;
             if (i > 0)
-                EXPECT_EQ(m->getInputStack(0)->getAmount(), MAX_STACK_SIZE - r.amount_in * (i / 4000 + 1));
+                EXPECT_EQ(m->getInputStack(0)->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / 4000 + 1));
             if (i == 4000)
                 EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
             if (i == 8000)

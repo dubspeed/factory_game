@@ -75,14 +75,36 @@ namespace Fac {
         Impure,
     };
 
-    struct SingleRecipe {
-        Resource r_in;
-        int amount_in;
-        Resource r_out;
-        int amount_out;
+    struct Recipe {
+        struct Ingredient {
+            Resource resource;
+            int amount;
+            NLOHMANN_DEFINE_TYPE_INTRUSIVE(Ingredient, resource, amount)
+        };
+
+        std::vector<Ingredient> inputs;
+        std::vector<Ingredient> products;
         int processing_time_s;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(SingleRecipe, r_in, amount_in, r_out, amount_out, processing_time_s)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Recipe, inputs, products, processing_time_s)
+    };
+
+    inline Recipe recipe_iron_ingots = {
+        .inputs = {{Resource::Iron_Ore, 1}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 2
+    };
+
+    inline Recipe recipe_iron_plates = {
+        .inputs = {{Resource::Iron_Ingots, 3}},
+        .products = {{Resource::Iron_Plates, 2}},
+        .processing_time_s = 6
+    };
+
+    inline Recipe recipe_iron_rods = {
+        .inputs = {{Resource::Iron_Ingots, 1}},
+        .products = {{Resource::Iron_Rods, 1}},
+        .processing_time_s = 4
     };
 
     inline int generate_id() {
@@ -106,13 +128,13 @@ namespace Fac {
     };
 
 
-    inline SingleRecipe recipe_iron_ingots{Resource::Iron_Ore, 1, Resource::Iron_Ingots, 1, 2};
-    inline SingleRecipe recipe_iron_plates{Resource::Iron_Ingots, 3, Resource::Iron_Plates, 2, 6};
-    inline SingleRecipe recipe_iron_rods{Resource::Iron_Ingots, 1, Resource::Iron_Rods, 1, 4};
-    inline SingleRecipe recipe_copper_ingots{Resource::Copper_Ore, 1, Resource::Copper_Ingots, 1, 2};
-    inline SingleRecipe recipe_copper_wire{Resource::Copper_Ingots, 1, Resource::Copper_Wire, 2, 4};
-    inline SingleRecipe recipe_copper_cable{Resource::Copper_Wire, 2, Resource::Copper_Cable, 1, 2};
-    inline SingleRecipe recipe_iron_screw{Resource::Iron_Rods, 1, Resource::Iron_Screw, 4, 6};
+    // inline SingleRecipe srecipe_iron_ingots{Resource::Iron_Ore, 1, Resource::Iron_Ingots, 1, 2};
+    // inline SingleRecipe srecipe_iron_plates{Resource::Iron_Ingots, 3, Resource::Iron_Plates, 2, 6};
+    // inline SingleRecipe srecipe_iron_rods{Resource::Iron_Ingots, 1, Resource::Iron_Rods, 1, 4};
+    // inline SingleRecipe srecipe_copper_ingots{Resource::Copper_Ore, 1, Resource::Copper_Ingots, 1, 2};
+    // inline SingleRecipe srecipe_copper_wire{Resource::Copper_Ingots, 1, Resource::Copper_Wire, 2, 4};
+    // inline SingleRecipe srecipe_copper_cable{Resource::Copper_Wire, 2, Resource::Copper_Cable, 1, 2};
+    // inline SingleRecipe srecipe_iron_screw{Resource::Iron_Rods, 1, Resource::Iron_Screw, 4, 6};
 
 
     struct Stack : public SerializableEntity {
@@ -261,7 +283,10 @@ namespace Fac {
     public:
         ResourceNode() = default;
 
-        void setResource(Resource const &r, ResourceQuality const quality) { _active_resource = r; _quality = quality; }
+        void setResource(Resource const &r, ResourceQuality const quality) {
+            _active_resource = r;
+            _quality = quality;
+        }
 
         [[nodiscard]] Resource getResource() const { return _active_resource; }
         [[nodiscard]] ResourceQuality getQuality() const { return _quality; }
@@ -303,17 +328,20 @@ namespace Fac {
     * -------------
     */
     class SingleMachine : public SimulatedEntity, public InputStackProvider, public OutputStackProvider {
-    friend void from_json(const json&, SingleMachine&);
+        friend void from_json(const json &, SingleMachine &);
+
     public:
+        static constexpr int fixed_input_slots = 0; // TODO allow multiple input slots for bigger machines
+        static constexpr int fixed_output_slots = 0; // TODO allow multiple input slots for bigger machines
         double processing_progress = 0.0;
         bool processing = false;
 
         SingleMachine(): InputStackProvider(1), OutputStackProvider(1) {
         };
 
-        void setRecipe(std::optional<SingleRecipe> const &r);
+        void setRecipe(std::optional<Recipe> const &r);
 
-        [[nodiscard]] std::optional<SingleRecipe> getRecipe() const;
+        [[nodiscard]] std::optional<Recipe> getRecipe() const;
 
         int getInputRpm() const;
 
@@ -331,9 +359,7 @@ namespace Fac {
 
     private:
         int _id = generate_id();
-        std::optional<SingleRecipe> _active_recipe;
-
-
+        std::optional<Recipe> _active_recipe;
     };
 
     void to_json(json &j, const SingleMachine &r);
@@ -370,9 +396,10 @@ namespace Fac {
 
 
     class Belt : public SimulatedEntity, public ItemMover {
-    friend void from_json(const json &j, Belt &r);
+        friend void from_json(const json &j, Belt &r);
+
     public:
-        Belt(int const items_per_s=1): ItemMover(1, 1, items_per_s) {
+        Belt(int const items_per_s = 1): ItemMover(1, 1, items_per_s) {
         }
 
         void update(double dt) override;
@@ -392,6 +419,7 @@ namespace Fac {
     // a splitter has one input and two or more outputs
     class Splitter : public SimulatedEntity, public ItemMover {
         friend void from_json(const json &j, Splitter &r);
+
     public:
         Splitter(): ItemMover(1, 2, 1) {
         }
@@ -411,6 +439,7 @@ namespace Fac {
 
     class Merger : public SimulatedEntity, public ItemMover {
         friend void from_json(const json &j, Merger &r);
+
     public:
         Merger(): ItemMover(2, 1, 1) {
         }

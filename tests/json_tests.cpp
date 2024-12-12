@@ -14,21 +14,29 @@ TEST(JSON, AStack) {
     EXPECT_EQ(s2.getResource(), Resource::Iron_Ore);
 }
 
-TEST(JSON, SingleRecipe) {
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+TEST(JSON, RecipeTest) {
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     json j = r;
-    auto const r2 = j.get<SingleRecipe>();
-    EXPECT_EQ(r2.amount_in, 5);
-    EXPECT_EQ(r2.amount_out, 1);
+    auto const r2 = j.get<Recipe>();
+    EXPECT_EQ(r2.inputs[0].amount, 5);
+    EXPECT_EQ(r2.products[0].amount, 1);
     EXPECT_EQ(r2.processing_time_s, 4);
-    EXPECT_EQ(r2.r_in, Resource::Iron_Ore);
-    EXPECT_EQ(r2.r_out, Resource::Iron_Ingots);
+    EXPECT_EQ(r2.inputs[0].resource, Resource::Iron_Ore);
+    EXPECT_EQ(r2.products[0].resource, Resource::Iron_Ingots);
     // std::cout << j.dump(4) << std::endl;
 }
 
 TEST(JSON, SingleMachine) {
     auto m = SingleMachine();
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     m.setRecipe(r);
     m.getInputStack(0)->addAmount(10, Resource::Iron_Ore);
     m.getOutputStack(0)->addAmount(33, Resource::Iron_Ingots);
@@ -37,7 +45,7 @@ TEST(JSON, SingleMachine) {
     auto const m2 = j.get<SingleMachine>();
     EXPECT_EQ(m2.getOutputRpm(), 15);
     EXPECT_EQ(m2.getInputRpm(), 75);
-    EXPECT_EQ(m2.getRecipe().value().amount_in, 5);
+    EXPECT_EQ(m2.getRecipe().value().inputs[0].amount, 5);
     EXPECT_EQ(m2.processing, false);
     EXPECT_EQ(m2.processing_progress, 0.0);
     EXPECT_EQ(m2.getId(), m.getId());
@@ -54,7 +62,11 @@ TEST(JSON, SingleMachine) {
 TEST(JSON, LinkedStacks) {
     auto m = std::make_shared<SingleMachine>();
     auto b = std::make_shared<Belt>(1);
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     m->setRecipe(r);
     b->connectInput(0, m, 0);
     m->getOutputStack(0)->addAmount(1, Resource::Iron_Ore);
@@ -72,7 +84,7 @@ TEST(JSON, LinkedStacks) {
 
     EXPECT_EQ(b2->getId(), b->getId());
     EXPECT_EQ(m2->getId(), m->getId());
-    EXPECT_EQ(m2->getRecipe().value().amount_in, 5);
+    EXPECT_EQ(m2->getRecipe().value().inputs[0].amount, 5);
     EXPECT_EQ(b2->getInputStack(0).get()->getAmount(), 1);
     EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::Iron_Ore);
 }
@@ -81,7 +93,11 @@ TEST(JSON, GameWorld) {
     auto w = GameWorld();
     auto m = std::make_shared<SingleMachine>();
     auto b = std::make_shared<Belt>(1);
-    auto r = SingleRecipe{Resource::Iron_Ore, 5, Resource::Iron_Ingots, 1, 4};
+    Recipe r = {
+        .inputs = {{Resource::Iron_Ore, 5}},
+        .products = {{Resource::Iron_Ingots, 1}},
+        .processing_time_s = 4
+    };
     m->setRecipe(r);
     b->connectInput(0, m, 0);
     m->getOutputStack(0)->addAmount(1, Resource::Iron_Ingots);
@@ -96,7 +112,7 @@ TEST(JSON, GameWorld) {
     auto b2 = std::dynamic_pointer_cast<Belt>(w2.getEntities()[1]);
     EXPECT_EQ(b2->getId(), b->getId());
     EXPECT_EQ(m2->getId(), m->getId());
-    EXPECT_EQ(m2->getRecipe().value().amount_in, 5);
+    EXPECT_EQ(m2->getRecipe().value().inputs[0].amount, 5);
     EXPECT_EQ(b2->getInputStack(0).get()->getAmount(), 1);
     EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::Iron_Ingots);
 }
