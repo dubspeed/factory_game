@@ -5,14 +5,14 @@ using namespace Fac;
 
 TEST(OneToOneConnectionTest, CanConnectAndMoveItems) {
     auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    m1->setRecipe(recipe_iron_ingots);
+    m1->setRecipe(recipe_IronIngot);
     auto m2 = std::make_shared<SingleMachine>(SingleMachine());
-    m2->setRecipe(recipe_iron_plates);
+    m2->setRecipe(recipe_IronPlate);
     auto belt = std::make_shared<Belt>(1);
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
 
-    m1->getOutputStack(0)->addOne(recipe_iron_ingots.products[0].resource);
+    m1->getOutputStack(0)->addOne(recipe_IronIngot.products[0].resource);
     belt->update(1);
     // this should move the item from m1 to the belt
     EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
@@ -31,16 +31,16 @@ TEST(OneToOneConnectionTest, CanConnectAndMoveItems) {
 
 TEST(OneToOneConnectionTest, TestJammedConnection) {
     auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    m1->setRecipe(recipe_iron_ingots);
+    m1->setRecipe(recipe_IronIngot);
     auto m2 = std::make_shared<SingleMachine>(SingleMachine());
-    m2->setRecipe(recipe_iron_rods); // Wrong recipe, should jam
+    m2->setRecipe(recipe_IronRod); // Wrong recipe, should jam
     auto belt = std::make_shared<Belt>(1);
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
 
     // belt.connectToInputStackFrom(TODO, 0);
     // belt.connectToOutputStackFrom(TODO, 0, 0);
-    m1->getOutputStack(0)->addOne(recipe_iron_ingots.products[0].resource);
+    m1->getOutputStack(0)->addOne(recipe_IronIngot.products[0].resource);
     belt->update(1);
     //EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
     EXPECT_EQ(belt->getJammed(), false);

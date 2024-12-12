@@ -13,8 +13,8 @@ TEST(TwoMachineProductionChain, WithSimpleBelt) {
     w.addEntity(m2);
     w.addEntity(belt);
 
-    m1->setRecipe(recipe_iron_ingots);
-    m2->setRecipe(recipe_iron_plates);
+    m1->setRecipe(recipe_IronIngot);
+    m2->setRecipe(recipe_IronPlate);
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
 
@@ -80,7 +80,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
     w.addEntity(belt1);
 
     // set recipe for the machine
-    m1->setRecipe(recipe_iron_ingots);
+    m1->setRecipe(recipe_IronIngot);
 
     // after around 2 minutes, we should have about 59 ingots
     w.advanceBy(2 * 60 * 1000, [&]() {

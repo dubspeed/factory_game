@@ -77,24 +77,6 @@ namespace Fac {
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(Recipe, inputs, products, processing_time_s)
     };
 
-    inline Recipe recipe_iron_ingots = {
-        .inputs = {{Resource::IronOre, 1}},
-        .products = {{Resource::IronIngot, 1}},
-        .processing_time_s = 2
-    };
-
-    inline Recipe recipe_iron_plates = {
-        .inputs = {{Resource::IronIngot, 3}},
-        .products = {{Resource::IronPlate, 2}},
-        .processing_time_s = 6
-    };
-
-    inline Recipe recipe_iron_rods = {
-        .inputs = {{Resource::IronIngot, 1}},
-        .products = {{Resource::IronRod, 1}},
-        .processing_time_s = 4
-    };
-
     inline int generate_id() {
         static int id = 0;
         return id++;
@@ -114,16 +96,6 @@ namespace Fac {
     public:
         virtual void update(double dt) = 0;
     };
-
-
-    // inline SingleRecipe srecipe_iron_ingots{Resource::IronOre, 1, Resource::IronIngot, 1, 2};
-    // inline SingleRecipe srecipe_iron_plates{Resource::IronIngot, 3, Resource::Iron_Plates, 2, 6};
-    // inline SingleRecipe srecipe_iron_rods{Resource::IronIngot, 1, Resource::Iron_Rods, 1, 4};
-    // inline SingleRecipe srecipe_copper_ingots{Resource::Copper_Ore, 1, Resource::Copper_Ingots, 1, 2};
-    // inline SingleRecipe srecipe_copper_wire{Resource::Copper_Ingots, 1, Resource::Copper_Wire, 2, 4};
-    // inline SingleRecipe srecipe_copper_cable{Resource::Copper_Wire, 2, Resource::Copper_Cable, 1, 2};
-    // inline SingleRecipe srecipe_iron_screw{Resource::Iron_Rods, 1, Resource::Iron_Screw, 4, 6};
-
 
     struct Stack : public SerializableEntity {
         void clear();

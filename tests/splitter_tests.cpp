@@ -11,10 +11,10 @@ TEST(Splitter, ShouldDoSomeSplitting) {
     auto m2 = std::make_shared<SingleMachine>(SingleMachine());
     auto m3 = std::make_shared<SingleMachine>(SingleMachine());
 
-    m1->setRecipe(recipe_iron_ingots);
-    m1->getInputStack(0)->addAmount(2, recipe_iron_ingots.inputs[0].resource);
-    m2->setRecipe(recipe_iron_plates);
-    m3->setRecipe(recipe_iron_plates);
+    m1->setRecipe(recipe_IronIngot);
+    m1->getInputStack(0)->addAmount(2, recipe_IronIngot.inputs[0].resource);
+    m2->setRecipe(recipe_IronPlate);
+    m3->setRecipe(recipe_IronPlate);
 
     auto belt1 = std::make_shared<Belt>(Belt(1));
     auto belt2 = std::make_shared<Belt>(Belt(1));

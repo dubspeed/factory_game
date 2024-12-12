@@ -19,10 +19,10 @@ TEST(Belt, ConnectTwoBelts) {
     belt2->connectInput(0, belt1, 0);
     m2->connectInput(0, belt2, 0);
 
-    m1->setRecipe(recipe_iron_ingots);
-    m2->setRecipe(recipe_iron_plates);
+    m1->setRecipe(recipe_IronIngot);
+    m2->setRecipe(recipe_IronPlate);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.inputs[0].resource);
+    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_IronIngot.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
 
     w.advanceBy(5 * 60 * 1000, [&]() {
@@ -41,8 +41,8 @@ TEST(Belt, ConnectTenBelts) {
     const auto m2 = std::make_shared<SingleMachine>(SingleMachine());
     w.addEntity(m1);
     w.addEntity(m2);
-    m1->setRecipe(recipe_iron_ingots);
-    m2->setRecipe(recipe_iron_plates);
+    m1->setRecipe(recipe_IronIngot);
+    m2->setRecipe(recipe_IronPlate);
 
     const int NUM_BELTS = 10; // TODO make update parallel to allow 1000
     auto belts = std::vector<std::shared_ptr<Belt> >();
@@ -64,7 +64,7 @@ TEST(Belt, ConnectTenBelts) {
     belts[NUM_BELTS-1]->connectInput(0, belts[NUM_BELTS-2], 0);
     m2->connectInput(0, belts[NUM_BELTS-1], 0);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_iron_ingots.inputs[0].resource);
+    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_IronIngot.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
 
     w.advanceBy(5 * 60 * 1000, [&]() {

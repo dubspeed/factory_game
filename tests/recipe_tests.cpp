@@ -16,7 +16,7 @@ TEST(RecipeTests, Recipe) {
 }
 
 TEST(RecipeTests, InAMachine) {
-    auto r = recipe_iron_ingots;
+    auto r = recipe_IronIngot;
     auto m = SingleMachine();
     m.setRecipe(r);
     EXPECT_EQ(m.getOutputRpm(), 30);
