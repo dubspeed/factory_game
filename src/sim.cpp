@@ -1,7 +1,5 @@
 #include "sim.h"
 #include <chrono>
-#include <algorithm>
-#include <thread>
 #include <iostream>
 
 using namespace Fac;
@@ -12,11 +10,11 @@ void Simulation::advanceTime(std::vector<std::shared_ptr<SimulatedEntity> > &ent
     }
 }
 
-void GameWorld::update(double const dt) {
+void GameWorld::update(double const dt) const {
     auto simulated_entities = std::vector<std::shared_ptr<SimulatedEntity> >();
     for (auto entity: _entities) {
         std::visit([&simulated_entities](const auto &e) {
-            if (std::is_base_of_v<SimulatedEntity, std::decay_t<decltype(*e)>>) {
+            if (std::is_base_of_v<SimulatedEntity, std::decay_t<decltype(*e)> >) {
                 simulated_entities.push_back(std::dynamic_pointer_cast<SimulatedEntity>(e));
             }
         }, entity);
@@ -25,41 +23,44 @@ void GameWorld::update(double const dt) {
 }
 
 // Updates the Gameworld by 1 ms at a time, until the given time has passed, then calls the callback
-void GameWorld::advanceBy(double const dt, std::function<void()> const &callback) {
+void GameWorld::advanceBy(double const dt, std::function<void()> const &callback) const {
     for (auto i = 0; i <= dt; i++) {
         update(1);
     }
     callback();
 }
 
-void processDeltaTime(double deltaTime) {
+void logTimeStep(double deltaTime) {
     std::cout << "Delta Time: " << deltaTime << " seconds" << std::endl;
 }
 
-void GameWorld::mainLoop() {
+void GameWorld::processWorldStep() const {
     using Clock = std::chrono::steady_clock;
     using TimePoint = std::chrono::time_point<Clock>;
 
-    TimePoint previousTime = Clock::now();
+    static TimePoint previousTime = Clock::now();
 
-    constexpr int numIterations = 10;
+    TimePoint const currentTime = Clock::now();
+    std::chrono::duration<double> const elapsed = currentTime - previousTime;
+    const double deltaTime = elapsed.count();
 
-    for (int i = 0; i < numIterations; ++i) {
-        // Get the current time at the start of the loop iteration
-        TimePoint currentTime = Clock::now();
+    update(deltaTime * 1000);
+    //logTimeStep(deltaTime);
+    previousTime = currentTime;
 
-        // Calculate the duration since the last iteration in seconds
-        std::chrono::duration<double> elapsed = currentTime - previousTime;
-        const double deltaTime = elapsed.count();
-
-        // Pass deltaTime to the processing function
-        processDeltaTime(deltaTime);
-
-        // Update previousTime to the current time for the next iteration
-        previousTime = currentTime;
-
-        // Simulate some work by sleeping for 500 milliseconds
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // Notify observers
+    for (const auto &entity: _entities) {
+        std::visit([this](const auto &e) {
+            if (auto gameEntity = std::dynamic_pointer_cast<GameWorldEntity>(e)) {
+                auto const id = gameEntity->getId();
+                auto observer = std::find_if(_observers.begin(), _observers.end(), [id](const EntityObserver &observer) {
+                    return observer.id == id;
+                });
+                if (observer != _observers.end()) {
+                    observer->callback(gameEntity);
+                }
+            }
+        }, entity);
     }
 }
 
@@ -147,6 +148,26 @@ void Fac::from_json(const json &j, GameWorld &r) {
         std::visit([&r](const auto &e) {
             if (auto belt = std::dynamic_pointer_cast<Belt>(e)) {
                 belt->reconnectLinks([r](const int id) {
+                    return r.getEntityById(id);
+                });
+            }
+            if (auto machine = std::dynamic_pointer_cast<SingleMachine>(e)) {
+                machine->reconnectLinks([r](const int id) {
+                    return r.getEntityById(id);
+                });
+            }
+            if (auto merger = std::dynamic_pointer_cast<Merger>(e)) {
+                merger->reconnectLinks([r](const int id) {
+                    return r.getEntityById(id);
+                });
+            }
+            if (auto splitter = std::dynamic_pointer_cast<Splitter>(e)) {
+                splitter->reconnectLinks([r](const int id) {
+                    return r.getEntityById(id);
+                });
+            }
+            if (auto storage = std::dynamic_pointer_cast<Storage>(e)) {
+                storage->reconnectLinks([r](const int id) {
                     return r.getEntityById(id);
                 });
             }

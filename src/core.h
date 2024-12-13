@@ -231,7 +231,10 @@ namespace Fac {
         void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) {
             for (int inputSlot = 0; inputSlot < _input_connections.size(); inputSlot++) {
                 auto const &connection = _input_connections.at(inputSlot);
-                connectInput(inputSlot, getEntityById(connection.sourceId), connection.sourceOutputSlot);
+                if (connection.cachedStack == nullptr && connection.sourceId != 0) {
+                    connectInput(inputSlot, getEntityById(connection.sourceId), connection.sourceOutputSlot);
+                    std::cout << "Reconnected input " << inputSlot << " to " << connection.sourceId << std::endl;
+                }
             }
         }
 

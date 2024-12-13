@@ -29,6 +29,12 @@ namespace Fac {
         std::shared_ptr<Storage>
     > > GameWorldEntities;
 
+
+    struct EntityObserver {
+        int id;
+        std::function<void(std::shared_ptr<GameWorldEntity>)> callback;
+    };
+
     // a global container, that can add and remove game entities
     // and runs the core game loop
     class GameWorld {
@@ -111,14 +117,19 @@ namespace Fac {
             _entities.clear();
         }
 
-        void update(double dt);
+        void update(double dt) const;
 
-        void advanceBy(double dt, std::function<void()> const &callback);
+        void advanceBy(double dt, std::function<void()> const &callback) const;
 
-        void mainLoop();
+        void processWorldStep() const;
+
+        void registerObserver(int id, std::function<void(std::shared_ptr<GameWorldEntity>)> const &callback) {
+            _observers.push_back({id, callback});
+        }
 
     private:
         GameWorldEntities _entities;
+        std::vector<EntityObserver> _observers;
     };
 
     void to_json(json &j, const GameWorld &r);
