@@ -251,6 +251,14 @@ namespace Fac {
             _quality = quality;
         }
 
+        void setResource(Resource const &r) {
+            _active_resource = r;
+        }
+
+        void setResourceQuality(ResourceQuality const quality) {
+            _quality = quality;
+        }
+
         [[nodiscard]] Resource getResource() const { return _active_resource; }
         [[nodiscard]] ResourceQuality getQuality() const { return _quality; }
 
@@ -261,7 +269,7 @@ namespace Fac {
         Resource _active_resource;
         ResourceQuality _quality;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResourceNode, _active_resource, _quality)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResourceNode, _id, _active_resource, _quality)
     };
 
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
@@ -273,7 +281,10 @@ namespace Fac {
         ResourceExtractor(): OutputStackProvider(1) {
         };
 
-        void setResourceNode(std::shared_ptr<ResourceNode> const &depot);
+        void setResourceNode(std::shared_ptr<ResourceNode> const &depot) {
+            _res_node = depot;
+            _res_node_id = depot->getId();
+        }
 
         [[nodiscard]] std::shared_ptr<ResourceNode> getResourceNode() const { return _res_node; };
 
@@ -281,9 +292,22 @@ namespace Fac {
 
         int getId() const override { return _id; }
 
+        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) {
+            for (int outputSlot = 0; outputSlot < _output_stacks.size(); outputSlot++) {
+                auto const &stack = _output_stacks.at(outputSlot);
+                if (_res_node_id > -1) {
+                    _res_node = std::dynamic_pointer_cast<ResourceNode>(getEntityById(_res_node_id));
+                    stack->lockResource(_res_node->getResource());
+                }
+            }
+        }
+
     private:
         int _id = generate_id();
+        int _res_node_id = -1;
         std::shared_ptr<ResourceNode> _res_node;
+
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResourceExtractor, _id, extraction_progress, extracting, _res_node_id)
     };
 
     /**

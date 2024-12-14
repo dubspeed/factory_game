@@ -172,12 +172,14 @@ void Fac::to_json(json &j, const Merger &r) {
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
+    m["inTransitStack"] = r._in_transit_stack;
     j["itemMover"] = m;
 }
 
 void Fac::from_json(const json &j, Merger &r) {
     r._items_per_s = j.at("itemMover").at("itemsPerSecond").get<int>();
     r._active = j.at("itemMover").at("active").get<bool>();
+    r._in_transit_stack = j.at("itemMover").at("inTransitStack").get<std::vector<Resource>>();
     r._jammed = j.at("itemMover").at("jammed").get<bool>();
     r._id = j.at("itemMover").at("id").get<int>();
     r._input_connections = j.at("itemMover").at("input").at("_input_connections").get<std::vector<InputConnection>>();
@@ -191,12 +193,14 @@ void Fac::to_json(json &j, const Splitter &r) {
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
+    m["inTransitStack"] = r._in_transit_stack;
     j["itemMover"] = m;
 }
 
 void Fac::from_json(const json &j, Splitter &r) {
     r._items_per_s = j.at("itemMover").at("itemsPerSecond").get<int>();
     r._active = j.at("itemMover").at("active").get<bool>();
+    r._in_transit_stack = j.at("itemMover").at("inTransitStack").get<std::vector<Resource>>();
     r._jammed = j.at("itemMover").at("jammed").get<bool>();
     r._id = j.at("itemMover").at("id").get<int>();
     r._input_connections = j.at("itemMover").at("input").at("_input_connections").get<std::vector<InputConnection>>();
@@ -369,9 +373,6 @@ bool Stack::addAmount(int const amount, Resource const &r) {
 }
 
 
-void ResourceExtractor::setResourceNode(std::shared_ptr<ResourceNode> const &res_node) {
-    _res_node = res_node;
-}
 
 void ResourceExtractor::update(double const dt) {
     if (!extracting) {

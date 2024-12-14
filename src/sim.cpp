@@ -143,33 +143,30 @@ void Fac::from_json(const json &j, GameWorld &r) {
         }
     }
 
+    auto fn = [r](const int id) {
+        return r.getEntityById(id);
+    };
+
     // iterate over the entities and reconnect the links
     for (const auto &entity: r._entities) {
-        std::visit([&r](const auto &e) {
+        std::visit([&r, fn](const auto &e) {
             if (auto belt = std::dynamic_pointer_cast<Belt>(e)) {
-                belt->reconnectLinks([r](const int id) {
-                    return r.getEntityById(id);
-                });
+                belt->reconnectLinks(fn);
             }
             if (auto machine = std::dynamic_pointer_cast<SingleMachine>(e)) {
-                machine->reconnectLinks([r](const int id) {
-                    return r.getEntityById(id);
-                });
+                machine->reconnectLinks(fn);
             }
             if (auto merger = std::dynamic_pointer_cast<Merger>(e)) {
-                merger->reconnectLinks([r](const int id) {
-                    return r.getEntityById(id);
-                });
+                merger->reconnectLinks(fn);
             }
             if (auto splitter = std::dynamic_pointer_cast<Splitter>(e)) {
-                splitter->reconnectLinks([r](const int id) {
-                    return r.getEntityById(id);
-                });
+                splitter->reconnectLinks(fn);
             }
             if (auto storage = std::dynamic_pointer_cast<Storage>(e)) {
-                storage->reconnectLinks([r](const int id) {
-                    return r.getEntityById(id);
-                });
+                storage->reconnectLinks(fn);
+            }
+            if (auto extractor = std::dynamic_pointer_cast<ResourceExtractor>(e)) {
+                extractor->reconnectLinks(fn);
             }
         }, entity);
     }

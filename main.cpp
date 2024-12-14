@@ -62,6 +62,68 @@ void setupGameWorld(GameWorld &w) {
     std::cout << "Setup complete\n";
 }
 
+// setup a complex game world to produce 240 Units / minutes of screws
+void setupGameWorld2(GameWorld &w) {
+    auto iron_node = std::make_shared<ResourceNode>(ResourceNode());
+    iron_node->setResource(Resource::IronOre);
+    iron_node->setResourceQuality(ResourceQuality::Normal);
+    w.addEntity(iron_node);
+    auto iron_extractor = std::make_shared<ResourceExtractor>(ResourceExtractor());
+    iron_extractor->setResourceNode(iron_node);
+    w.addEntity(iron_extractor);
+
+    // add a belts and splitter to supply three smelters with ore to produce iron ingots
+    auto belt1 = std::make_shared<Belt>(1);
+    belt1->connectInput(0, iron_extractor, 0);
+    w.addEntity(belt1);
+    auto splitter1 = std::make_shared<Splitter>(Splitter());
+    splitter1->connectInput(0, belt1, 0);
+    w.addEntity(splitter1);
+
+    auto belt2 = std::make_shared<Belt>(1);
+    belt2->connectInput(0, splitter1, 0);
+    w.addEntity(belt2);
+
+    auto belt3 = std::make_shared<Belt>(1);
+    belt3->connectInput(0, splitter1, 1);
+    w.addEntity(belt3);
+
+    // create a smelter and connect to belt2
+    auto smelter1 = std::make_shared<SingleMachine>(SingleMachine());
+    smelter1->setRecipe(recipe_IronIngot);
+    smelter1->connectInput(0, belt2, 0);
+    w.addEntity(smelter1);
+
+    // create splitter 2 and connect to belt3
+    auto splitter2 = std::make_shared<Splitter>(Splitter());
+    splitter2->connectInput(0, belt3, 0);
+    w.addEntity(splitter2);
+
+    // two more belts to splitter 2
+    auto belt4 = std::make_shared<Belt>(1);
+    belt4->connectInput(0, splitter2, 0);
+    w.addEntity(belt4);
+
+    auto belt5 = std::make_shared<Belt>(1);
+    belt5->connectInput(0, splitter2, 1);
+    w.addEntity(belt5);
+
+
+    // create another two smelters and connect to splitter2
+    auto smelter2 = std::make_shared<SingleMachine>(SingleMachine());
+    smelter2->setRecipe(recipe_IronIngot);
+    smelter2->connectInput(0, belt4, 0);
+    w.addEntity(smelter2);
+
+    auto smelter3 = std::make_shared<SingleMachine>(SingleMachine());
+    smelter3->setRecipe(recipe_IronIngot);
+    smelter3->connectInput(0, belt5, 0);
+    w.addEntity(smelter3);
+
+    std::cout << "Iron Ingot Setup complete\n";
+}
+
+
 int main(int argc, char *argv[]) {
     std::signal(SIGINT, signal_handler); // CTRL-C
     std::signal(SIGTERM, signal_handler); // Termination request
@@ -84,7 +146,7 @@ int main(int argc, char *argv[]) {
         i.close();
 
     } else {
-        setupGameWorld(w);
+        setupGameWorld2(w);
         std::cout << "Created new world\n";
     }
 
