@@ -103,34 +103,66 @@ namespace Fac {
     };
 
     struct Stack : public SerializableEntity {
-        void clear();
+        void clear() {
+            _amount = 0;
+            resource = std::nullopt;
+        }
 
-        bool isEmpty() const;
+        bool isEmpty() const {
+            return _amount == 0;
+        }
 
-        bool isFull() const { return _amount == MAX_STACK_SIZE; }
+        bool isFull() const { return _amount == _max_stack_size; }
 
-        bool canAdd(int amount, Resource const &r) const;
+        bool canAdd(int const amount, Resource const &r) const {
+            return _amount + amount <= _max_stack_size && (resource == r || resource == std::nullopt);
+        }
+
+        bool removeOne() {
+            return removeAmount(1);
+        }
 
         int getAmount() const { return _amount; }
         Resource getResource() const { return resource.value(); }
         void lockResource(Resource const &r) { resource = r; }
 
-        bool removeOne();
+        bool removeAmount(int const amount) {
+            if (_amount >= amount) {
+                _amount -= amount;
+                if (_amount == 0) {
+                    clear();
+                }
+                return true;
+            }
+            return false;
+        }
 
-        bool removeAmount(int amount);
+        bool addOne(Resource const &r) {
+            return addAmount(1, r);
+        }
 
-        bool addOne(Resource const &r);
-
-        bool addAmount(int amount, Resource const &r);
+        bool addAmount(int const amount, Resource const &r) {
+            if (_amount == 0) {
+                resource = r;
+            }
+            if (_amount + amount <= _max_stack_size && resource == r) {
+                _amount += amount;
+                return true;
+            }
+            return false;
+        }
 
         int getId() const override { return _id; }
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Stack, _id, _amount, resource)
+        void setMaxStackSize(int max_stack_size) { _max_stack_size = max_stack_size; }
+
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Stack, _id, _amount, resource, _max_stack_size)
 
     private:
         int _amount = 0;
         int _id = generate_id();
         std::optional<Resource> resource = std::nullopt;
+        int _max_stack_size = MAX_STACK_SIZE;
     };
 
 
@@ -249,6 +281,7 @@ namespace Fac {
 
     class ResourceNode : public GameWorldEntity {
         friend void from_json(const json &j, ResourceNode &r);;
+
     public:
         ResourceNode() = default;
 
@@ -277,12 +310,15 @@ namespace Fac {
     };
 
     void to_json(json &j, const ResourceNode &r);
+
     void from_json(const json &j, ResourceNode &r);
 
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
     class ResourceExtractor : public SimulatedEntity, public OutputStackProvider, public IInputLink {
         friend void to_json(json &j, const ResourceExtractor &r);
+
         friend void from_json(const json &j, ResourceExtractor &r);
+
     public:
         double extraction_progress = 0.0;
         bool extracting = false;
@@ -316,7 +352,9 @@ namespace Fac {
         int _res_node_id = -1;
         std::shared_ptr<ResourceNode> _res_node;
     };
+
     void to_json(json &j, const ResourceExtractor &r);
+
     void from_json(const json &j, ResourceExtractor &r);
 
     /**
@@ -379,6 +417,10 @@ namespace Fac {
         ItemMover(int const input_nodes, int const output_nodes,
                   int const items_per_s): InputStackProvider(input_nodes), OutputStackProvider(output_nodes),
                                           _items_per_s(items_per_s) {
+            // All item movers have a max stack size of 1
+            std::ranges::for_each(_output_stacks, [&](std::shared_ptr<Stack> &output_stack) {
+                output_stack->setMaxStackSize(1);
+            });
         }
 
         std::vector<Resource> _in_transit_stack;

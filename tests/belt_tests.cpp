@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "gtest/gtest.h"
 #include "../src/factory.h"
 
@@ -75,4 +77,14 @@ TEST(Belt, ConnectTenBelts) {
             EXPECT_FALSE(belt->getJammed());
         }
     });
+}
+
+TEST(Belt, HasAOutputStackOfOneItem) {
+    auto belt = std::make_shared<Belt>(1);
+    belt->getOutputStack(0)->setMaxStackSize(1);
+    belt->getOutputStack(0)->addAmount(1, Resource::IronOre);
+
+    EXPECT_EQ(belt->getOutputStack(0)->getAmount(), 1);
+    EXPECT_FALSE(belt->getOutputStack(0)->canAdd(1, Resource::IronOre));
+    EXPECT_TRUE(belt->getOutputStack(0)->isFull());
 }

@@ -41,3 +41,13 @@ TEST(Merger, CanMergeTwoBelts) {
         EXPECT_EQ(mg->_in_transit_stack.size(), 0);
     });
 }
+
+TEST(Merger, HasAOutputStackOfOneItem) {
+    auto mg = std::make_shared<Merger>();
+    mg->getOutputStack(0)->setMaxStackSize(1);
+    mg->getOutputStack(0)->addAmount(1, Resource::IronOre);
+
+    EXPECT_EQ(mg->getOutputStack(0)->getAmount(), 1);
+    EXPECT_FALSE(mg->getOutputStack(0)->canAdd(1, Resource::IronOre));
+    EXPECT_TRUE(mg->getOutputStack(0)->isFull());
+}

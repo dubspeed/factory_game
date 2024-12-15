@@ -79,7 +79,8 @@ void SingleMachine::_checkAndFinishProduction() {
             // TODO what to do when output stack is full?
             // Idea: keep in a processing and add to output stack when it becomes available
         } else {
-            getOutputStack(0)->addAmount(r.products[fixed_output_slots].amount, r.products[fixed_output_slots].resource);
+            getOutputStack(0)->addAmount(r.products[fixed_output_slots].amount,
+                                         r.products[fixed_output_slots].resource);
         }
     }
 }
@@ -106,8 +107,6 @@ bool SingleMachine::_canStartProduction() const {
 
     return true;
 }
-
-
 
 
 void Belt::update(double dt) {
@@ -229,51 +228,6 @@ void Merger::update(double dt) {
         }
     }
 }
-
-void Stack::clear() {
-    _amount = 0;
-    resource = std::nullopt;
-}
-
-bool Stack::isEmpty() const {
-    return _amount == 0;
-}
-
-bool Stack::canAdd(int const amount, Resource const &r) const {
-    return _amount + amount <= MAX_STACK_SIZE && (resource == r || resource == std::nullopt);
-}
-
-bool Stack::removeOne() {
-    return removeAmount(1);
-}
-
-bool Stack::removeAmount(int const amount) {
-    if (_amount >= amount) {
-        _amount -= amount;
-        if (_amount == 0) {
-            clear();
-        }
-        return true;
-    }
-    return false;
-}
-
-bool Stack::addOne(Resource const &r) {
-    return addAmount(1, r);
-}
-
-bool Stack::addAmount(int const amount, Resource const &r) {
-    if (_amount == 0) {
-        resource = r;
-    }
-    if (_amount + amount <= MAX_STACK_SIZE && resource == r) {
-        _amount += amount;
-        return true;
-    }
-    return false;
-}
-
-
 
 void ResourceExtractor::update(double const dt) {
     if (!extracting) {

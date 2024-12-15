@@ -57,3 +57,13 @@ TEST(Splitter, ShouldDoSomeSplitting) {
         EXPECT_FALSE(sp->getJammed());
     });
 }
+
+TEST(Splitter, HasAOutputStackOfOneItem) {
+    auto sp = std::make_shared<Splitter>();
+    sp->getOutputStack(0)->setMaxStackSize(1);
+    sp->getOutputStack(0)->addAmount(1, Resource::IronOre);
+
+    EXPECT_EQ(sp->getOutputStack(0)->getAmount(), 1);
+    EXPECT_FALSE(sp->getOutputStack(0)->canAdd(1, Resource::IronOre));
+    EXPECT_TRUE(sp->getOutputStack(0)->isFull());
+}

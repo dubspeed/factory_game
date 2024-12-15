@@ -122,6 +122,8 @@ void setupGameWorld2(GameWorld &w) {
     smelter2->setRecipe(recipe_IronIngot);
     smelter3->setRecipe(recipe_IronIngot);
 
+    smelter1->getOutputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronIngot);
+
     std::cout << "Iron Ingot Setup complete\n";
 }
 
