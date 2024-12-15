@@ -37,7 +37,7 @@ void signal_handler(int signal) {
 
 void print_machine(std::shared_ptr<SingleMachine> machine) {
 
-    std::cout << "Watched entity: " << machine->getId() << ":";
+    std::cout << "Machine: " << machine->getId() << ":";
     std::cout << "Input Amount: " << machine->getInputStack(0)->getAmount() << " " << " / ";
     std::cout << "Output Amount: " << machine->getOutputStack(0)->getAmount() << " " << " / ";
     std::cout << "Processing: " << machine->processing << " / ";
@@ -62,63 +62,65 @@ void setupGameWorld(GameWorld &w) {
     std::cout << "Setup complete\n";
 }
 
-// setup a complex game world to produce 240 Units / minutes of screws
+template<typename T>
+requires std::derived_from<T, GameWorldEntity>
+auto create(GameWorld &w, T entity) {
+    auto e = std::make_shared<T>(entity);
+    w.addEntity(e);
+    return e;
+}
+
+auto setResourceAndQuality(std::shared_ptr<ResourceNode> node, Resource resource, ResourceQuality quality) {
+    node->setResource(resource);
+    node->setResourceQuality(quality);
+    return node;
+}
+
+
+typedef std::pair<std::shared_ptr<GameWorldEntity>, int> Connection;
+
+#define CONNECTION(a, b) std::make_pair<std::shared_ptr<GameWorldEntity>, int>(a, b)
+#define FROM_SLOT0(a) CONNECTION(a, 0)
+#define FROM_SLOT1(a) CONNECTION(a, 1)
+#define TO_SLOT0(a) CONNECTION(a, 0)
+#define TO_SLOT1(a) CONNECTION(a, 1)
+
+void connectInput(Connection const &from, Connection const &to) {
+    const auto connector = std::dynamic_pointer_cast<IInputProvider>(from.first);
+    connector->connectInput(from.second, to.first, to.second);
+}
+
 void setupGameWorld2(GameWorld &w) {
-    auto iron_node = std::make_shared<ResourceNode>(ResourceNode());
-    iron_node->setResource(Resource::IronOre);
-    iron_node->setResourceQuality(ResourceQuality::Normal);
-    w.addEntity(iron_node);
-    auto iron_extractor = std::make_shared<ResourceExtractor>(ResourceExtractor());
+    auto iron_node = create(w, ResourceNode());
+    auto iron_extractor = create(w, ResourceExtractor());
+    auto belt1 = create(w, Belt());
+    auto belt2 = create(w, Belt());
+    auto belt3 = create(w, Belt());
+    auto belt4 = create(w, Belt());
+    auto belt5 = create(w, Belt());
+    auto splitter1 = create(w, Splitter());
+    auto splitter2 = create(w, Splitter());
+    auto splitter3 = create(w, Splitter());
+    auto smelter1 = create(w, SingleMachine());
+    auto smelter2 = create(w, SingleMachine());
+    auto smelter3 = create(w, SingleMachine());
+
+    setResourceAndQuality(iron_node, Resource::IronOre, ResourceQuality::Normal);
     iron_extractor->setResourceNode(iron_node);
-    w.addEntity(iron_extractor);
+    connectInput(FROM_SLOT0(belt1), TO_SLOT0(iron_extractor));
+    connectInput(FROM_SLOT0(splitter1), TO_SLOT0(belt1));
+    connectInput(FROM_SLOT0(belt2), TO_SLOT0(splitter1));
+    connectInput(FROM_SLOT0(belt3), TO_SLOT1(splitter1));
+    connectInput(FROM_SLOT0(smelter1), TO_SLOT0(belt2));
+    connectInput(FROM_SLOT0(splitter2), TO_SLOT0(belt3));
+    connectInput(FROM_SLOT0(belt4), TO_SLOT0(splitter2));
+    connectInput(FROM_SLOT0(belt5), TO_SLOT1(splitter2));
+    connectInput(FROM_SLOT0(smelter2), TO_SLOT0(belt4));
+    connectInput(FROM_SLOT0(smelter3), TO_SLOT0(belt5));
 
-    // add a belts and splitter to supply three smelters with ore to produce iron ingots
-    auto belt1 = std::make_shared<Belt>(1);
-    belt1->connectInput(0, iron_extractor, 0);
-    w.addEntity(belt1);
-    auto splitter1 = std::make_shared<Splitter>(Splitter());
-    splitter1->connectInput(0, belt1, 0);
-    w.addEntity(splitter1);
-
-    auto belt2 = std::make_shared<Belt>(1);
-    belt2->connectInput(0, splitter1, 0);
-    w.addEntity(belt2);
-
-    auto belt3 = std::make_shared<Belt>(1);
-    belt3->connectInput(0, splitter1, 1);
-    w.addEntity(belt3);
-
-    // create a smelter and connect to belt2
-    auto smelter1 = std::make_shared<SingleMachine>(SingleMachine());
     smelter1->setRecipe(recipe_IronIngot);
-    smelter1->connectInput(0, belt2, 0);
-    w.addEntity(smelter1);
-
-    // create splitter 2 and connect to belt3
-    auto splitter2 = std::make_shared<Splitter>(Splitter());
-    splitter2->connectInput(0, belt3, 0);
-    w.addEntity(splitter2);
-
-    // two more belts to splitter 2
-    auto belt4 = std::make_shared<Belt>(1);
-    belt4->connectInput(0, splitter2, 0);
-    w.addEntity(belt4);
-
-    auto belt5 = std::make_shared<Belt>(1);
-    belt5->connectInput(0, splitter2, 1);
-    w.addEntity(belt5);
-
-
-    // create another two smelters and connect to splitter2
-    auto smelter2 = std::make_shared<SingleMachine>(SingleMachine());
     smelter2->setRecipe(recipe_IronIngot);
-    smelter2->connectInput(0, belt4, 0);
-    w.addEntity(smelter2);
-
-    auto smelter3 = std::make_shared<SingleMachine>(SingleMachine());
     smelter3->setRecipe(recipe_IronIngot);
-    smelter3->connectInput(0, belt5, 0);
-    w.addEntity(smelter3);
 
     std::cout << "Iron Ingot Setup complete\n";
 }
@@ -170,6 +172,31 @@ int main(int argc, char *argv[]) {
             if (auto m = std::dynamic_pointer_cast<SingleMachine>(entity); m) {
                 print_machine(m);
             }
+            if (auto b = std::dynamic_pointer_cast<Belt>(entity); b) {
+                std::cout << "Belt: " << b->getId() << ":";
+                std::cout << "In Transit: " << b->_in_transit_stack.size() << " / ";
+                std::cout << "Output: " << b->getOutputStack(0)->getAmount() << " / ";
+                std::cout << "Jammed: " << b->getJammed() << " / ";
+                std::cout << std::endl;
+            }
+            if (auto sp = std::dynamic_pointer_cast<Splitter>(entity); sp) {
+                std::cout << "Splitter: " << sp->getId() << ":";
+                std::cout << "Output0: " << sp->getOutputStack(0)->getAmount() << " / ";
+                std::cout << "Output1: " << sp->getOutputStack(1)->getAmount() << " / ";
+                std::cout << "Jammed: " << sp->getJammed() << " / ";
+                std::cout << std::endl;
+            }
+            if (auto ex = std::dynamic_pointer_cast<ResourceExtractor>(entity); ex) {
+                std::cout << "Extractor: " << ex->getId() << ":";
+                std::cout << "Output: " << ex->getOutputStack(0)->getAmount() << " / ";
+                std::cout << std::endl;
+            }
+            // if (auto s = std::dynamic_pointer_cast<Storage>(entity); s) {
+            //     std::cout << "Watched entity: " << s->getId() << ":";
+            //     std::cout << "Content: " << s->getAmount(Resource::IronOre) << " / ";
+            //     std::cout << "Max Stacks: " << s->getMaxItemStacks() << " / ";
+            //     std::cout << std::endl;
+            // }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // 60 FPS cap
     }
