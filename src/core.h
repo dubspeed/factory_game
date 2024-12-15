@@ -97,6 +97,11 @@ namespace Fac {
         virtual void update(double dt) = 0;
     };
 
+    class IInputLink {
+    public:
+        virtual void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) = 0;
+    };
+
     struct Stack : public SerializableEntity {
         void clear();
 
@@ -189,7 +194,7 @@ namespace Fac {
 
     void from_json(const json &j, InputConnection &r);
 
-    class InputStackProvider : public IInputProvider {
+    class InputStackProvider : public IInputProvider, public IInputLink {
     protected:
         std::vector<InputConnection> _input_connections;
 
@@ -228,7 +233,7 @@ namespace Fac {
             connection.cachedStack = nullptr;
         }
 
-        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) {
+        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
             for (int inputSlot = 0; inputSlot < _input_connections.size(); inputSlot++) {
                 auto const &connection = _input_connections.at(inputSlot);
                 if (connection.cachedStack == nullptr && connection.sourceId != 0) {
@@ -243,6 +248,7 @@ namespace Fac {
 
 
     class ResourceNode : public GameWorldEntity {
+        friend void from_json(const json &j, ResourceNode &r);;
     public:
         ResourceNode() = default;
 
@@ -268,12 +274,15 @@ namespace Fac {
         int _id = generate_id();
         Resource _active_resource;
         ResourceQuality _quality;
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResourceNode, _id, _active_resource, _quality)
     };
 
+    void to_json(json &j, const ResourceNode &r);
+    void from_json(const json &j, ResourceNode &r);
+
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
-    class ResourceExtractor : public SimulatedEntity, public OutputStackProvider {
+    class ResourceExtractor : public SimulatedEntity, public OutputStackProvider, public IInputLink {
+        friend void to_json(json &j, const ResourceExtractor &r);
+        friend void from_json(const json &j, ResourceExtractor &r);
     public:
         double extraction_progress = 0.0;
         bool extracting = false;
@@ -292,7 +301,7 @@ namespace Fac {
 
         int getId() const override { return _id; }
 
-        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) {
+        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
             for (int outputSlot = 0; outputSlot < _output_stacks.size(); outputSlot++) {
                 auto const &stack = _output_stacks.at(outputSlot);
                 if (_res_node_id > -1) {
@@ -306,9 +315,9 @@ namespace Fac {
         int _id = generate_id();
         int _res_node_id = -1;
         std::shared_ptr<ResourceNode> _res_node;
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(ResourceExtractor, _id, extraction_progress, extracting, _res_node_id)
     };
+    void to_json(json &j, const ResourceExtractor &r);
+    void from_json(const json &j, ResourceExtractor &r);
 
     /**
     * SingleMachine

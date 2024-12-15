@@ -116,3 +116,7 @@ TEST(JSON, GameWorld) {
     EXPECT_EQ(b2->getInputStack(0).get()->getAmount(), 1);
     EXPECT_EQ(b2->getInputStack(0).get()->getResource(), Resource::IronIngot);
 }
+
+TEST(JSON, ResourceExtractor) {
+    // TBD
+}
