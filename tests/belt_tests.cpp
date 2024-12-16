@@ -24,12 +24,12 @@ TEST(Belt, ConnectTwoBelts) {
     m1->setRecipe(recipe_IronIngot);
     m2->setRecipe(recipe_IronPlate);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_IronIngot.inputs[0].resource);
+    m1->getInput()->addAmount(MAX_STACK_SIZE, recipe_IronIngot.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
 
     w.advanceBy(5 * 60 * 1000, [&]() {
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 0);
-        EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
+        EXPECT_EQ(m1->getInput()->getAmount(), 0);
+        EXPECT_EQ(m2->getInput()->getAmount(), 1);
         EXPECT_EQ(belt1->_in_transit_stack.size(), 0);
         EXPECT_EQ(belt2->_in_transit_stack.size(), 0);
         EXPECT_FALSE(belt1->getJammed());

@@ -38,9 +38,9 @@ TEST(Splitter, ShouldDoSomeSplitting) {
     // the first takes 2 seconds to produces and 3 seconds to
     // pass belt1, belt2 and end up in m2
     w.advanceBy(2000 + 3000, [&]() {
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 0);
-        EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
-        EXPECT_EQ(m3->getInputStack(0)->getAmount(), 0);
+        EXPECT_EQ(m1->getInput()->getAmount(), 0);
+        EXPECT_EQ(m2->getInput()->getAmount(), 1);
+        EXPECT_EQ(m3->getInput()->getAmount(), 0);
         EXPECT_FALSE(belt1->getJammed());
         EXPECT_FALSE(belt2->getJammed());
         EXPECT_FALSE(belt3->getJammed());
@@ -48,9 +48,9 @@ TEST(Splitter, ShouldDoSomeSplitting) {
     });
 
     w.advanceBy(2000 + 2000 + 3000, [&]() {
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 0);
-        EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
-        EXPECT_EQ(m3->getInputStack(0)->getAmount(), 1);
+        EXPECT_EQ(m1->getInput()->getAmount(), 0);
+        EXPECT_EQ(m2->getInput()->getAmount(), 1);
+        EXPECT_EQ(m3->getInput()->getAmount(), 1);
         EXPECT_FALSE(belt1->getJammed());
         EXPECT_FALSE(belt2->getJammed());
         EXPECT_FALSE(belt3->getJammed());

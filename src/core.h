@@ -370,7 +370,10 @@ namespace Fac {
         double processing_progress = 0.0;
         bool processing = false;
 
-        SingleMachine(): InputStackProvider(1), OutputStackProvider(1) {
+        SingleMachine(): InputStackProvider(2), OutputStackProvider(1) {
+            // input stack 0 will be the connection to the belt
+            // input stack 1 is the internal buffer
+            InputStackProvider::getInputStack(1)->setMaxStackSize(MAX_STACK_SIZE);
         };
 
         void setRecipe(std::optional<Recipe> const &r);
@@ -383,13 +386,15 @@ namespace Fac {
 
         void update(double dt) override;
 
-        void _checkAndStartProcessing();
-
-        void _checkAndFinishProduction();
-
-        bool _canStartProduction() const;
-
         int getId() const override { return _id; }
+
+        bool canStartProduction() const;
+
+        // TODO: better API needed here, since we can't have multiple input slots on this machine
+        // TODO: and input slot 0 is actually the belt connection
+        std::shared_ptr<Stack> getInput() const {
+            return InputStackProvider::getInputStack(1);
+        }
 
     private:
         int _id = generate_id();

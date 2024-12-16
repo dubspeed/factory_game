@@ -18,39 +18,39 @@ TEST(TwoMachineProductionChain, WithSimpleBelt) {
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
 
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
+    m1->getInput()->addAmount(MAX_STACK_SIZE, Resource::IronOre);
     EXPECT_TRUE(m2->getOutputStack(0)->isEmpty());
 
     // first ingot is produced
     w.advanceBy(2000, [&]() {
         EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
-        EXPECT_TRUE(m2->getInputStack(0)->isEmpty());
+        EXPECT_TRUE(m2->getInput()->isEmpty());
         EXPECT_EQ(belt->_in_transit_stack.size(), 1);
     });
     // first ingot shipped
     w.advanceBy(1000, [&]() {
         EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
-        EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
+        EXPECT_EQ(m2->getInput()->getAmount(), 1);
         EXPECT_EQ(belt->_in_transit_stack.size(), 0);
     });
     // somewhere in the middle of production
     w.advanceBy(105333, [&]() {
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 45);
+        EXPECT_EQ(m1->getInput()->getAmount(), 45);
         EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 32);
         EXPECT_EQ(belt->_in_transit_stack.size(), 1);
     });
     // first machine is finished last ingot shipping
     w.advanceBy(90000, [&]() {
-       EXPECT_TRUE(m1->getInputStack(0)->isEmpty());
+       EXPECT_TRUE(m1->getInput()->isEmpty());
         EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
-       EXPECT_EQ(m2->getInputStack(0)->getAmount(), 2);
+       EXPECT_EQ(m2->getInput()->getAmount(), 2);
        EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 62);
        EXPECT_EQ(belt->_in_transit_stack.size(), 1);
    });
     // production finished with 66 plates
     w.advanceBy(7000, [&]() {
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 0);
-        EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
+        EXPECT_EQ(m1->getInput()->getAmount(), 0);
+        EXPECT_EQ(m2->getInput()->getAmount(), 1);
         EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 66);
         EXPECT_EQ(belt->_in_transit_stack.size(), 0);
     });
@@ -86,7 +86,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
     w.advanceBy(2 * 60 * 1000, [&]() {
         EXPECT_TRUE(e1->getOutputStack(0)->isEmpty());
         EXPECT_TRUE(m1->processing);
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 59);
+        EXPECT_EQ(m1->getInput()->getAmount(), 59);
         EXPECT_EQ(m1->getOutputStack(0)->getAmount(), 59);
         EXPECT_EQ(belt1->_in_transit_stack.size(), 1);
         EXPECT_FALSE(belt1->getJammed());
@@ -96,7 +96,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
     w.advanceBy(5 * 60 * 1000, [&]() {
         EXPECT_EQ(e1->getOutputStack(0)->getAmount(), 100);
         EXPECT_FALSE(m1->processing);
-        EXPECT_EQ(m1->getInputStack(0)->getAmount(), 100);
+        EXPECT_EQ(m1->getInput()->getAmount(), 100);
         EXPECT_EQ(m1->getOutputStack(0)->getAmount(), 100);
         EXPECT_EQ(belt1->_in_transit_stack.size(), 1);
         EXPECT_TRUE(belt1->getJammed());

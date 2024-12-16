@@ -35,17 +35,6 @@ void signal_handler(int signal) {
     saveWorld(w);
 }
 
-void print_machine(std::shared_ptr<SingleMachine> machine) {
-
-    std::cout << "Machine: " << machine->getId() << ":";
-    std::cout << "Input Amount: " << machine->getInputStack(0)->getAmount() << " " << " / ";
-    std::cout << "Output Amount: " << machine->getOutputStack(0)->getAmount() << " " << " / ";
-    std::cout << "Processing: " << machine->processing << " / ";
-    std::cout << "Progress: " << machine->getRecipe().value().processing_time_s * 1000 - machine->processing_progress << " / ";
-    std::cout << std::endl;
-    std::cout.flush();
-}
-
 void setupGameWorld(GameWorld &w) {
     auto m1 = std::make_shared<SingleMachine>(SingleMachine());
     w.addEntity(m1);
@@ -172,7 +161,14 @@ int main(int argc, char *argv[]) {
         std::cout << CSI + "2J";
         for (auto &entity: w.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<SingleMachine>(entity); m) {
-                print_machine(m);
+                std::cout << "Machine: " << m->getId() << ":";
+                std::cout << "Input 0:" << m->getInputStack(0)->getAmount() << " " << " / ";
+                std::cout << "Input 1:" << m->getInputStack(1)->getAmount() << " " << " / ";
+                std::cout << "Output: " << m->getOutputStack(0)->getAmount() << " " << " / ";
+                std::cout << "Processing: " << m->processing << " / ";
+                std::cout << "Progress: " << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress << " / ";
+                std::cout << std::endl;
+                std::cout.flush();
             }
             if (auto b = std::dynamic_pointer_cast<Belt>(entity); b) {
                 std::cout << "Belt: " << b->getId() << ":";

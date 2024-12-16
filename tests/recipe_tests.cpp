@@ -34,19 +34,19 @@ TEST(RecipeTests, SimpleProductionCheckWithTime) {
     };
     w.addEntity(m);
     m->setRecipe(r);
-    m->getInputStack(0)->addAmount(5, r.inputs[0].resource);;
+    m->getInput()->addAmount(5, r.inputs[0].resource);;
     for (auto i = 0; i < 4; i++) {
         w.update(1000);
         EXPECT_EQ(m->processing, true);
-        EXPECT_TRUE(m->getInputStack(0)->isEmpty());
+        EXPECT_TRUE(m->getInput()->isEmpty());
         EXPECT_TRUE(m->getOutputStack(0)->isEmpty());
-        EXPECT_EQ(m->processing_progress, 1000 * (i));
+        EXPECT_EQ(m->processing_progress, 1000 * (i+1));
     }
     w.update(1000);
     EXPECT_EQ(m->processing, false);
-    EXPECT_TRUE(m->getInputStack(0)->isEmpty());
+    EXPECT_TRUE(m->getInput()->isEmpty());
     EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
-    EXPECT_EQ(m->processing_progress, 4000);
+    EXPECT_EQ(m->processing_progress, 0);
 }
 
 TEST(RecipeTests, LetsPassTime) {
@@ -67,15 +67,16 @@ TEST(RecipeTests, LetsPassTime) {
     m->setRecipe(r);
 
     // add some raw material
-    m->getInputStack(0)->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
+    m->getInput()->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
 
+    auto in = m->getInput();
     // move time to the future, by iterating via delta_t
     for (auto i = 0; i < 12001; i++) {
         w.update(1);
         if (i % 4000 == 0) {
             // std::cout << "Time: " << i << std::endl;
             if (i > 0)
-                EXPECT_EQ(m->getInputStack(0)->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / 4000 + 1));
+                EXPECT_EQ(in->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / 4000 + 1));
             if (i == 4000)
                 EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
             if (i == 8000)

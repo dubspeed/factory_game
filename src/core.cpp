@@ -9,14 +9,14 @@ static int _calculate_rpm(std::optional<int> const processing_time, std::optiona
 }
 
 void SingleMachine::setRecipe(std::optional<Recipe> const &r) {
-    if (r->inputs.size() > fixed_input_slots + 1) {
-        throw std::runtime_error("This machine only has one input slot");
-    }
+    // if (r->inputs.size() > fixed_input_slots + 1) {
+    //     throw std::runtime_error("This machine only has one input slot");
+    // }
     if (r->products.size() > fixed_output_slots + 1) {
         throw std::runtime_error("This machine only has one output slot");
     }
     _active_recipe = r;
-    auto const stack_in = getInputStack(0);
+    auto const stack_in = getInputStack(1);
     auto const stack_out = getOutputStack(0);
 
     if (stack_in == nullptr || stack_out == nullptr) {
@@ -53,28 +53,20 @@ void SingleMachine::update(double const dt) {
     if (!_active_recipe.has_value()) {
         return;
     }
-    processing_progress += dt;
-    _checkAndFinishProduction();
-    _checkAndStartProcessing();
-}
 
-void SingleMachine::_checkAndStartProcessing() {
-    if (!processing && _canStartProduction()) {
-        auto const r = _active_recipe.value();
-        getInputStack(0)->removeAmount(r.inputs[fixed_input_slots].amount);
-        processing_progress = 0.0;
-        processing = true;
+    auto connected_input = getInputStack(0);
+    auto interal_input_stack = getInputStack(1);
+    // move items from connected input to internal input stack
+    if (!connected_input->isEmpty() && interal_input_stack->canAdd(1, connected_input->getResource())) {
+        interal_input_stack->addOne(connected_input->getResource());
+        connected_input->removeOne();
     }
-}
-
-void SingleMachine::_checkAndFinishProduction() {
-    if (!processing)
-        return;
 
     auto const r = _active_recipe.value();
 
     if (processing_progress >= r.processing_time_s * 1000) {
         processing = false;
+        processing_progress = 0.0;
         if (getOutputStack(0)->getAmount() == MAX_STACK_SIZE) {
             // TODO what to do when output stack is full?
             // Idea: keep in a processing and add to output stack when it becomes available
@@ -83,9 +75,19 @@ void SingleMachine::_checkAndFinishProduction() {
                                          r.products[fixed_output_slots].resource);
         }
     }
+
+    if (!processing && canStartProduction()) {
+        getInputStack(1)->removeAmount(r.inputs[fixed_input_slots].amount);
+        processing_progress = 0.0;
+        processing = true;
+    }
+
+    if (processing) {
+        processing_progress += dt;
+    }
 }
 
-bool SingleMachine::_canStartProduction() const {
+bool SingleMachine::canStartProduction() const {
     if (processing)
         return false;
 
@@ -96,10 +98,10 @@ bool SingleMachine::_canStartProduction() const {
     if (r.processing_time_s == 0)
         return false;
 
-    if (!getInputStack(0) || !getOutputStack(0))
+    if (!getInputStack(0) || !getInputStack(1) || !getOutputStack(0))
         return false;
 
-    if (getInputStack(0)->getAmount() < r.inputs[fixed_input_slots].amount)
+    if (getInputStack(1)->getAmount() < r.inputs[fixed_input_slots].amount)
         return false;
 
     if (getOutputStack(0)->isFull())
