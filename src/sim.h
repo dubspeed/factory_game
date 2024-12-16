@@ -7,17 +7,6 @@
 #include "storage.h"
 
 namespace Fac {
-
-
-    // System that operates on all SimulatedEntites
-    class Simulation {
-    public:
-        Simulation() = default;
-
-        static void advanceTime(std::vector<std::shared_ptr<SimulatedEntity> > &entities, double dt);
-    };
-
-
     typedef std::vector<std::variant<
         std::shared_ptr<Stack>,
         std::shared_ptr<SingleMachine>,
@@ -45,6 +34,7 @@ namespace Fac {
     public:
         GameWorld() = default;
 
+        // TODO: costly, as it casts each entity to a shared pointer of GameworldEnt
         [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity> > getEntities() const {
             auto result = std::vector<std::shared_ptr<GameWorldEntity> >();
             result.reserve(_entities.size());
@@ -62,15 +52,7 @@ namespace Fac {
 
         // return the casted entity by id
         [[nodiscard]] std::shared_ptr<GameWorldEntity> getEntityById(int id) const {
-            std::shared_ptr<GameWorldEntity> result;
-            for (const auto &entity: _entities) {
-                std::visit([id, &result](const auto &e) {
-                    if (e->getId() == id) {
-                        result = std::dynamic_pointer_cast<GameWorldEntity>(e);
-                    }
-                }, entity);
-            }
-            return result;
+            return _entity_map.at(id);
         }
 
         // templates need to be available at compile time, not just at link time, so
@@ -78,6 +60,7 @@ namespace Fac {
         template<typename T>
             requires std::derived_from<T, GameWorldEntity>
         void addEntity(std::shared_ptr<T> const &entity) {
+            _entity_map[entity->getId()] = entity;
             if (auto belt = std::dynamic_pointer_cast<Belt>(entity)) {
                 _entities.push_back(belt);
             } else if (auto stack = std::dynamic_pointer_cast<Stack>(entity)) {
@@ -110,11 +93,13 @@ namespace Fac {
                 return false;
             }
             std::erase(_entities, entity);
+            _entity_map.erase(entity->getId());
             return true;
         }
 
         void clearWorld() {
             _entities.clear();
+            _entity_map.clear();
         }
 
         void update(double dt) const;
@@ -130,6 +115,7 @@ namespace Fac {
     private:
         GameWorldEntities _entities;
         std::vector<EntityObserver> _observers;
+        std::map<int, std::shared_ptr<GameWorldEntity> > _entity_map;
     };
 
     void to_json(json &j, const GameWorld &r);

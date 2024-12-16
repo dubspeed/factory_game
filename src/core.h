@@ -10,7 +10,6 @@ using json = nlohmann::json;
 
 namespace Fac {
     class GameWorldEntity;
-    class SimulatedEntity;
     class InputStackProvider;
     class OutputStackProvider;
 }
@@ -82,18 +81,10 @@ namespace Fac {
         return id++;
     }
 
-    class SerializableEntity {
+    class GameWorldEntity {
     public:
         [[nodiscard]] virtual int getId() const = 0;
-    };
-
-    class GameWorldEntity : public SerializableEntity {
-    public:
         virtual ~GameWorldEntity() = default;
-    };
-
-    class SimulatedEntity : public GameWorldEntity {
-    public:
         virtual void update(double dt) = 0;
     };
 
@@ -102,7 +93,7 @@ namespace Fac {
         virtual void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) = 0;
     };
 
-    struct Stack : public SerializableEntity {
+    struct Stack : public GameWorldEntity {
         void clear() {
             _amount = 0;
             resource = std::nullopt;
@@ -151,6 +142,8 @@ namespace Fac {
             }
             return false;
         }
+
+        void update(double dt) override {}
 
         int getId() const override { return _id; }
 
@@ -301,6 +294,8 @@ namespace Fac {
         [[nodiscard]] Resource getResource() const { return _active_resource; }
         [[nodiscard]] ResourceQuality getQuality() const { return _quality; }
 
+        void update(double dt) override {}
+
         int getId() const override { return _id; }
 
     private:
@@ -314,7 +309,7 @@ namespace Fac {
     void from_json(const json &j, ResourceNode &r);
 
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
-    class ResourceExtractor : public SimulatedEntity, public OutputStackProvider, public IInputLink {
+    class ResourceExtractor : public GameWorldEntity, public OutputStackProvider, public IInputLink {
         friend void to_json(json &j, const ResourceExtractor &r);
 
         friend void from_json(const json &j, ResourceExtractor &r);
@@ -361,7 +356,7 @@ namespace Fac {
     * SingleMachine
     * -------------
     */
-    class SingleMachine : public SimulatedEntity, public InputStackProvider, public OutputStackProvider {
+    class SingleMachine : public GameWorldEntity, public InputStackProvider, public OutputStackProvider {
         friend void from_json(const json &, SingleMachine &);
 
     public:
@@ -438,7 +433,7 @@ namespace Fac {
     };
 
 
-    class Belt : public SimulatedEntity, public ItemMover {
+    class Belt : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Belt &r);
 
     public:
@@ -460,7 +455,7 @@ namespace Fac {
     // TODO maybe the splitter can be a belt with a special case
     // TODO also consider the merger, which is the opposite of the splitter
     // a splitter has one input and two or more outputs
-    class Splitter : public SimulatedEntity, public ItemMover {
+    class Splitter : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Splitter &r);
 
     public:
@@ -480,7 +475,7 @@ namespace Fac {
 
     void from_json(const json &j, Splitter &r);
 
-    class Merger : public SimulatedEntity, public ItemMover {
+    class Merger : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Merger &r);
 
     public:

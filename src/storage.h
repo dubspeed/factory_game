@@ -4,7 +4,7 @@
 #include "core.h"
 
 namespace Fac {
-    class Storage : public SimulatedEntity, public InputStackProvider, public OutputStackProvider {
+    class Storage : public GameWorldEntity, public InputStackProvider, public OutputStackProvider {
         friend void to_json(json &j, const Storage &r);
 
         friend void from_json(const json &j, Storage &r);

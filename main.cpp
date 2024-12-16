@@ -156,10 +156,11 @@ int main(int argc, char *argv[]) {
     std::cout << CSI + "s";
 
 
+    auto entities = w.getEntities();
     while (!stop) {
         w.processWorldStep();
         std::cout << CSI + "2J";
-        for (auto &entity: w.getEntities()) {
+        for (auto &entity: entities) {
             if (auto m = std::dynamic_pointer_cast<SingleMachine>(entity); m) {
                 std::cout << "Machine: " << m->getId() << ":";
                 std::cout << "Input 0:" << m->getInputStack(0)->getAmount() << " " << " / ";

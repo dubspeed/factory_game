@@ -4,22 +4,12 @@
 
 using namespace Fac;
 
-void Simulation::advanceTime(std::vector<std::shared_ptr<SimulatedEntity> > &entities, double dt) {
-    for (const auto &entityPtr: entities) {
-        entityPtr->update(dt);
-    }
-}
-
 void GameWorld::update(double const dt) const {
-    auto simulated_entities = std::vector<std::shared_ptr<SimulatedEntity> >();
-    for (auto entity: _entities) {
-        std::visit([&simulated_entities](const auto &e) {
-            if (std::is_base_of_v<SimulatedEntity, std::decay_t<decltype(*e)> >) {
-                simulated_entities.push_back(std::dynamic_pointer_cast<SimulatedEntity>(e));
-            }
-        }, entity);
+    for (const auto& variant : _entities) {
+        std::visit([dt](const auto& e) {
+            e->update(dt);
+        }, variant);
     }
-    Simulation::advanceTime(simulated_entities, dt);
 }
 
 // Updates the Gameworld by 1 ms at a time, until the given time has passed, then calls the callback
