@@ -200,6 +200,7 @@ void Fac::to_json(json &j, const GameWorld &r) {
 
 void Fac::from_json(const json &j, GameWorld &r) {
     r._entities.clear();
+    r._entity_map.clear();
 
     // Loop through each entity in the JSON array
     for (const auto &entity_json: j["entities"]) {
@@ -208,28 +209,44 @@ void Fac::from_json(const json &j, GameWorld &r) {
         // Create appropriate variant based on type
         if (type == "Belt") {
             auto b = entity_json["data"].get<Belt>();
-            r._entities.push_back(std::make_shared<Belt>(b));
+            auto belt = std::make_shared<Belt>(b);
+            r._entities.push_back(belt);
+            r._entity_map[belt->getId()] = belt;
         } else if (type == "Stack") {
             auto s = entity_json["data"].get<Stack>();
-            r._entities.push_back(std::make_shared<Stack>(s));
+            auto stack = std::make_shared<Stack>(s);
+            r._entities.push_back(stack);
+            r._entity_map[stack->getId()] = stack;
         } else if (type == "SingleMachine") {
             auto m = entity_json["data"].get<SingleMachine>();
-            r._entities.push_back(std::make_shared<SingleMachine>(m));
+            auto machine = std::make_shared<SingleMachine>(m);
+            r._entities.push_back(machine);
+            r._entity_map[machine->getId()] = machine;
         } else if (type == "ResourceNode") {
             auto m = entity_json["data"].get<ResourceNode>();
-            r._entities.push_back(std::make_shared<ResourceNode>(m));
+            auto node = std::make_shared<ResourceNode>(m);
+            r._entities.push_back(node);
+            r._entity_map[node->getId()] = node;
         } else if (type == "ResourceExtractor") {
             auto m = entity_json["data"].get<ResourceExtractor>();
-            r._entities.push_back(std::make_shared<ResourceExtractor>(m));
+            auto extractor = std::make_shared<ResourceExtractor>(m);
+            r._entities.push_back(extractor);
+            r._entity_map[extractor->getId()] = extractor;
         } else if (type == "Merger") {
             auto m = entity_json["data"].get<Merger>();
-            r._entities.push_back(std::make_shared<Merger>(m));
+            auto merger = std::make_shared<Merger>(m);
+            r._entities.push_back(merger);
+            r._entity_map[merger->getId()] = merger;
         } else if (type == "Splitter") {
             auto m = entity_json["data"].get<Splitter>();
-            r._entities.push_back(std::make_shared<Splitter>(m));
+            auto splitter = std::make_shared<Splitter>(m);
+            r._entities.push_back(splitter);
+            r._entity_map[splitter->getId()] = splitter;
         } else if (type == "Storage") {
             auto m = entity_json["data"].get<Storage>();
-            r._entities.push_back(std::make_shared<Storage>(m));
+            auto storage = std::make_shared<Storage>(m);
+            r._entities.push_back(storage);
+            r._entity_map[storage->getId()] = storage;
         } else {
             throw std::runtime_error("Unknown entity type in JSON");
         }

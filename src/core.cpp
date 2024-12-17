@@ -54,32 +54,34 @@ void SingleMachine::update(double const dt) {
         return;
     }
 
-    auto connected_input = getInputStack(0);
-    auto interal_input_stack = getInputStack(1);
+    auto const connected_input = getInputStack(0);
+    auto const interal_input_stack = getInputStack(1);
     // move items from connected input to internal input stack
     if (!connected_input->isEmpty() && interal_input_stack->canAdd(1, connected_input->getResource())) {
         interal_input_stack->addOne(connected_input->getResource());
         connected_input->removeOne();
     }
 
-    auto const r = _active_recipe.value();
+    const auto [inputs, products, processing_time_s] = _active_recipe.value();
 
-    if (processing_progress >= r.processing_time_s * 1000) {
+    if (processing_progress >= processing_time_s * 1000) {
         processing = false;
         processing_progress = 0.0;
         if (getOutputStack(0)->getAmount() == MAX_STACK_SIZE) {
             // TODO what to do when output stack is full?
             // Idea: keep in a processing and add to output stack when it becomes available
         } else {
-            getOutputStack(0)->addAmount(r.products[fixed_output_slots].amount,
-                                         r.products[fixed_output_slots].resource);
+            getOutputStack(0)->addAmount(products[fixed_output_slots].amount,
+                                         products[fixed_output_slots].resource);
         }
+        return;
     }
 
     if (!processing && canStartProduction()) {
-        getInputStack(1)->removeAmount(r.inputs[fixed_input_slots].amount);
+        getInputStack(1)->removeAmount(inputs[fixed_input_slots].amount);
         processing_progress = 0.0;
         processing = true;
+        return;
     }
 
     if (processing) {
@@ -124,6 +126,7 @@ void Belt::update(double dt) {
         _in_transit_stack.push_back(getInputStack(0)->getResource());
         _time_to_next_transfer = 0.0;
         getInputStack(0)->removeOne();
+        return;
     }
 
     if (_active && !_in_transit_stack.empty()) {
@@ -194,9 +197,6 @@ void Splitter::update(double dt) {
             _active = false;
         }
     }
-
-    // problem is that is now has to split everything into it's internal stack
-    // -> can I limit it to e.g. 0 or 1 maybe?
 }
 
 void Merger::update(double dt) {
@@ -238,12 +238,17 @@ void ResourceExtractor::update(double const dt) {
             extracting = true;
         }
         extraction_progress = 0.0;
+        return;
     }
-    extraction_progress += dt;
 
     if (extracting && extraction_progress >= 1000) {
         getOutputStack(0)->addOne(_res_node->getResource());
         extraction_progress = 0.0;
-        extracting = false; // done extracting
+        extracting = false;
+        return;
+    }
+
+    if (extracting) {
+        extraction_progress += dt;
     }
 }

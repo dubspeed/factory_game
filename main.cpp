@@ -154,48 +154,50 @@ int main(int argc, char *argv[]) {
     std::string CSI = "\u001B[";
     auto clear = CSI + "2J";
     std::cout << CSI + "s";
+    std::cout << std::setprecision(0) << std::fixed;
 
-
-    auto entities = w.getEntities();
+    // auto entities = w.getEntities();
     while (!stop) {
-        w.processWorldStep();
         std::cout << CSI + "2J";
-        for (auto &entity: entities) {
+        w.processWorldStep();
+        for (auto &entity: w.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<SingleMachine>(entity); m) {
-                std::cout << "Machine: " << m->getId() << ":";
-                std::cout << "Input 0:" << m->getInputStack(0)->getAmount() << " " << " / ";
-                std::cout << "Input 1:" << m->getInputStack(1)->getAmount() << " " << " / ";
-                std::cout << "Output: " << m->getOutputStack(0)->getAmount() << " " << " / ";
-                std::cout << "Processing: " << m->processing << " / ";
-                std::cout << "Progress: " << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress << " / ";
-                std::cout << std::endl;
-                std::cout.flush();
-            }
-            if (auto b = std::dynamic_pointer_cast<Belt>(entity); b) {
-                std::cout << "Belt: " << b->getId() << ":";
-                std::cout << "In Transit: " << b->_in_transit_stack.size() << " / ";
-                std::cout << "Output: " << b->getOutputStack(0)->getAmount() << " / ";
-                std::cout << "Jammed: " << b->getJammed() << " / ";
+                std::cout << "Mach:" << std::setw(2) << m->getId();
+                std::cout << "/I1:" << m->getInputStack(1)->getAmount();
+                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/P:" << m->processing;
+                std::cout << "/T:" << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress;
                 std::cout << std::endl;
             }
-            if (auto sp = std::dynamic_pointer_cast<Splitter>(entity); sp) {
-                std::cout << "Splitter: " << sp->getId() << ":";
-                std::cout << "Output0: " << sp->getOutputStack(0)->getAmount() << " / ";
-                std::cout << "Output1: " << sp->getOutputStack(1)->getAmount() << " / ";
-                std::cout << "Jammed: " << sp->getJammed() << " / ";
+            if (auto m = std::dynamic_pointer_cast<Belt>(entity); m) {
+                std::cout << "Belt:" << std::setw(2) << m->getId();
+                std::cout << "/TR:" << m->_in_transit_stack.size();
+                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
-            if (auto ex = std::dynamic_pointer_cast<ResourceExtractor>(entity); ex) {
-                std::cout << "Extractor: " << ex->getId() << ":";
-                std::cout << "Output: " << ex->getOutputStack(0)->getAmount() << " / ";
+            if (auto m = std::dynamic_pointer_cast<Splitter>(entity); m) {
+                std::cout << "Spli:" << std::setw(2) << m->getId();
+                std::cout << "/TR:" << m->_in_transit_stack.size();
+                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/O1:" << m->getOutputStack(1)->getAmount();
+                std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
-            // if (auto s = std::dynamic_pointer_cast<Storage>(entity); s) {
-            //     std::cout << "Watched entity: " << s->getId() << ":";
-            //     std::cout << "Content: " << s->getAmount(Resource::IronOre) << " / ";
-            //     std::cout << "Max Stacks: " << s->getMaxItemStacks() << " / ";
-            //     std::cout << std::endl;
-            // }
+            if (auto m = std::dynamic_pointer_cast<ResourceExtractor>(entity); m) {
+                std::cout << "Extr:" << std::setw(2) << m->getId();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/EX:" << m->extracting;
+                std::cout << std::endl;
+            }
+            if (auto m = std::dynamic_pointer_cast<Storage>(entity); m) {
+                std::cout << "Stor:" << std::setw(2) << m->getId();
+                // std::cout << "Content: " << s->getAmount(Resource::IronOre) << " / ";
+                std::cout << std::endl;
+            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // 60 FPS cap
     }

@@ -21,7 +21,7 @@ void GameWorld::advanceBy(double const dt, std::function<void()> const &callback
 }
 
 void logTimeStep(double deltaTime) {
-    std::cout << "Delta Time: " << deltaTime << " seconds" << std::endl;
+    std::cout << "DT:" << deltaTime << " ms" << std::endl;
 }
 
 void GameWorld::processWorldStep() const {
@@ -32,10 +32,10 @@ void GameWorld::processWorldStep() const {
 
     TimePoint const currentTime = Clock::now();
     std::chrono::duration<double> const elapsed = currentTime - previousTime;
-    const double deltaTime = elapsed.count();
+    const double deltaTime = elapsed.count() * 1000;
 
-    update(deltaTime * 1000);
-    //logTimeStep(deltaTime);
+    update(deltaTime);
+    logTimeStep(deltaTime);
     previousTime = currentTime;
 
     // Notify observers
