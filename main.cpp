@@ -3,6 +3,8 @@
 #include "src/tools/generators.h"
 #include <csignal>
 #include <thread>
+#include <unistd.h>
+
 #include "nlohmann/json.hpp"
 
 using namespace Fac;
@@ -51,69 +53,70 @@ void setupGameWorld(GameWorld &w) {
     std::cout << "Setup complete\n";
 }
 
+#define LIT(x) #x
+#define CONNECTION(a, b) std::make_pair<std::shared_ptr<GameWorldEntity> const&, int>(a, b)
+#define FROM_SLOT0(a) CONNECTION(a, 0)
+#define FROM_SLOT1(a) CONNECTION(a, 1)
+#define TO_SLOT0(a) CONNECTION(a, 0)
+#define TO_SLOT1(a) CONNECTION(a, 1)
+#define LINK(from_output, to_input) linkWithBelt(from_output, to_input)
+#define CREATE(id, type) auto const id = create(w, type()) ; id->name = "" LIT(id)
+#define CRAFTER(name, recipe) CREATE(name, SingleMachine); name->setRecipe(recipe_##recipe)
+#define SPLITTER(name) CREATE(name, Splitter)
+#define MERGER(name) CREATE(name, Merger)
+#define EXTRACTOR(name, node) CREATE(name, ResourceExtractor); name->setResourceNode(node)
+#define RESOURCE_NODE(name, resource, quality) CREATE(name, ResourceNode) ; name->setResource(Resource::resource); name->setResourceQuality(ResourceQuality::quality)
+#define SMALL_STORAGE(name) CREATE(name, Storage) ; name->setMaxItemStacks(12)
+
+typedef std::pair<const std::shared_ptr<GameWorldEntity>, int> Connection;
+
 template<typename T>
 requires std::derived_from<T, GameWorldEntity>
-auto create(GameWorld &w, T entity) {
+auto create(GameWorld &w, T const &entity) {
     auto e = std::make_shared<T>(entity);
     w.addEntity(e);
     return e;
 }
 
-auto setResourceAndQuality(std::shared_ptr<ResourceNode> node, Resource resource, ResourceQuality quality) {
-    node->setResource(resource);
-    node->setResourceQuality(quality);
-    return node;
+void connectInput(Connection const &from_input, Connection const &to_output) {
+    const auto connector = std::dynamic_pointer_cast<IInputProvider>(from_input.first);
+    connector->connectInput(from_input.second, to_output.first, to_output.second);
 }
 
-
-typedef std::pair<std::shared_ptr<GameWorldEntity>, int> Connection;
-
-#define CONNECTION(a, b) std::make_pair<std::shared_ptr<GameWorldEntity>, int>(a, b)
-#define FROM_SLOT0(a) CONNECTION(a, 0)
-#define FROM_SLOT1(a) CONNECTION(a, 1)
-#define TO_SLOT0(a) CONNECTION(a, 0)
-#define TO_SLOT1(a) CONNECTION(a, 1)
-
-void connectInput(Connection const &from, Connection const &to) {
-    const auto connector = std::dynamic_pointer_cast<IInputProvider>(from.first);
-    connector->connectInput(from.second, to.first, to.second);
+void linkWithBelt(Connection const &from_output, Connection const &to_input) {
+    CREATE(belt, Belt);
+    connectInput(FROM_SLOT0(belt), from_output);
+    connectInput(to_input, TO_SLOT0(belt));
 }
 
 void setupGameWorld2(GameWorld &w) {
-    auto iron_node = create(w, ResourceNode());
-    auto iron_extractor = create(w, ResourceExtractor());
-    auto belt1 = create(w, Belt());
-    auto belt2 = create(w, Belt());
-    auto belt3 = create(w, Belt());
-    auto belt4 = create(w, Belt());
-    auto belt5 = create(w, Belt());
-    auto splitter1 = create(w, Splitter());
-    auto splitter2 = create(w, Splitter());
-    auto splitter3 = create(w, Splitter());
-    auto smelter1 = create(w, SingleMachine());
-    auto smelter2 = create(w, SingleMachine());
-    auto smelter3 = create(w, SingleMachine());
+    RESOURCE_NODE(iron_node, IronOre, Normal);
+    RESOURCE_NODE(copper_node, CopperOre, Normal);
 
-    setResourceAndQuality(iron_node, Resource::IronOre, ResourceQuality::Normal);
-    iron_extractor->setResourceNode(iron_node);
-    connectInput(FROM_SLOT0(belt1), TO_SLOT0(iron_extractor));
-    connectInput(FROM_SLOT0(splitter1), TO_SLOT0(belt1));
-    connectInput(FROM_SLOT0(belt2), TO_SLOT0(splitter1));
-    connectInput(FROM_SLOT0(belt3), TO_SLOT1(splitter1));
-    connectInput(FROM_SLOT0(smelter1), TO_SLOT0(belt2));
-    connectInput(FROM_SLOT0(splitter2), TO_SLOT0(belt3));
-    connectInput(FROM_SLOT0(belt4), TO_SLOT0(splitter2));
-    connectInput(FROM_SLOT0(belt5), TO_SLOT1(splitter2));
-    connectInput(FROM_SLOT0(smelter2), TO_SLOT0(belt4));
-    connectInput(FROM_SLOT0(smelter3), TO_SLOT0(belt5));
+    EXTRACTOR(iron_extractor, iron_node);
+    EXTRACTOR(copper_extractor, copper_node);
 
-    smelter1->setRecipe(recipe_IronIngot);
-    smelter2->setRecipe(recipe_IronIngot);
-    smelter3->setRecipe(recipe_IronIngot);
+    MERGER(mg1);
+    LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(mg1));
+    LINK(FROM_SLOT0(copper_extractor), TO_SLOT1(mg1));
 
-    smelter1->getOutputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronIngot);
+    SMALL_STORAGE(storage1);
+    LINK(FROM_SLOT0(mg1), TO_SLOT0(storage1));
 
-    std::cout << "Iron Ingot Setup complete\n";
+
+    // SPLITTER(sp1);
+    // LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
+    // SPLITTER(sp2);
+    // LINK(FROM_SLOT0(sp1), TO_SLOT0(sp2));
+    //
+    // CRAFTER(smelter1, IronIngot);
+    // LINK(FROM_SLOT1(sp1), TO_SLOT0(smelter1));
+    // CRAFTER(smelter2, IronIngot);
+    // LINK(FROM_SLOT0(sp2), TO_SLOT0(smelter2));
+    // CRAFTER(smelter3, IronIngot);
+    // LINK(FROM_SLOT1(sp2), TO_SLOT0(smelter3));
+    //
+    // std::cout << "Iron Ingot Setup complete\n";
 }
 
 
@@ -143,13 +146,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Created new world\n";
     }
 
-    // TODO should be able to have more gameworlds without crashing :)
-// setupGameWorld(w);
-
-
     std::cout << "Running... (Press CTRL-D or CTRL-C to exit)\n";
-
-
 
     std::string CSI = "\u001B[";
     auto clear = CSI + "2J";
@@ -162,7 +159,7 @@ int main(int argc, char *argv[]) {
         w.processWorldStep();
         for (auto &entity: w.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<SingleMachine>(entity); m) {
-                std::cout << "Mach:" << std::setw(2) << m->getId();
+                std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/I1:" << m->getInputStack(1)->getAmount();
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
@@ -171,7 +168,7 @@ int main(int argc, char *argv[]) {
                 std::cout << std::endl;
             }
             if (auto m = std::dynamic_pointer_cast<Belt>(entity); m) {
-                std::cout << "Belt:" << std::setw(2) << m->getId();
+                std::cout << "Belt:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/TR:" << m->_in_transit_stack.size();
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
@@ -179,7 +176,7 @@ int main(int argc, char *argv[]) {
                 std::cout << std::endl;
             }
             if (auto m = std::dynamic_pointer_cast<Splitter>(entity); m) {
-                std::cout << "Spli:" << std::setw(2) << m->getId();
+                std::cout << "Spli:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/TR:" << m->_in_transit_stack.size();
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
@@ -187,15 +184,25 @@ int main(int argc, char *argv[]) {
                 std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
+            if (auto m = std::dynamic_pointer_cast<Merger>(entity); m) {
+                std::cout << "Merg:" << std::setw(2) << m->getId() << " " << m->name;
+                std::cout << "/TR:" << m->_in_transit_stack.size();
+                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/I1:" << m->getInputStack(1)->getAmount();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/J:" << m->getJammed();
+                std::cout << std::endl;
+            }
             if (auto m = std::dynamic_pointer_cast<ResourceExtractor>(entity); m) {
-                std::cout << "Extr:" << std::setw(2) << m->getId();
+                std::cout << "Extr:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/EX:" << m->extracting;
                 std::cout << std::endl;
             }
             if (auto m = std::dynamic_pointer_cast<Storage>(entity); m) {
-                std::cout << "Stor:" << std::setw(2) << m->getId();
-                // std::cout << "Content: " << s->getAmount(Resource::IronOre) << " / ";
+                std::cout << "Stor:" << std::setw(2) << m->getId() << " " << m->name;
+                std::cout << "/Iron:" << m->getAmount(Resource::IronOre);
+                std::cout << "/Cop:" << m->getAmount(Resource::CopperOre);
                 std::cout << std::endl;
             }
         }

@@ -143,9 +143,14 @@ void Belt::update(double dt) {
             }
             _active = false;
         }
+        return;
     }
 
-    // TODO: check if jammed and try to unjam
+    // try to unjam
+    if (_jammed || (!_active && !_in_transit_stack.empty())) {
+        _time_to_next_transfer = 0.0;
+        _active = true;
+    }
 }
 
 void Splitter::update(double dt) {
@@ -196,22 +201,50 @@ void Splitter::update(double dt) {
             }
             _active = false;
         }
+        return;
+    }
+
+    // try to unjam
+    if (_jammed || (!_active && !_in_transit_stack.empty())) {
+        _time_to_next_transfer = 0.0;
+        _active = true;
     }
 }
 
 void Merger::update(double dt) {
-    if (!_active && (!getInputStack(0)->isEmpty() || !getInputStack(1)->isEmpty()) && _in_transit_stack.empty()) {
-        _active = true;
-        merge_from_first_input = merge_from_first_input && !getInputStack(0)->isEmpty();
-        if (merge_from_first_input) {
-            _in_transit_stack.push_back(getInputStack(0)->getResource());
-            getInputStack(0)->removeOne();
-        } else {
-            _in_transit_stack.push_back(getInputStack(1)->getResource());
-            getInputStack(1)->removeOne();
+    if (!_active &&  _in_transit_stack.empty()) {
+
+        auto const ip0 = getInputStack(0);
+        auto const ip1 = getInputStack(1);
+
+        if (ip0->isEmpty() && ip1->isEmpty()) {
+            return;
         }
-        _time_to_next_transfer = 0.0;
-        merge_from_first_input = !merge_from_first_input;
+        if (merge_from_first_input) {
+            if (ip0->isEmpty()) {
+                merge_from_first_input = false;
+                return;
+            } else {
+                _in_transit_stack.push_back(ip0->getResource());
+                ip0->removeOne();
+                merge_from_first_input = false;
+                _active = true;
+                _time_to_next_transfer = 0.0;
+                return;
+            }
+        } else {
+            if (ip1->isEmpty()) {
+                merge_from_first_input = true;
+                return;
+            } else {
+                _in_transit_stack.push_back(ip1->getResource());
+                ip1->removeOne();
+                merge_from_first_input = true;
+                _active = true;
+                _time_to_next_transfer = 0.0;
+                return;
+            }
+        }
         return;
     }
 
@@ -228,6 +261,13 @@ void Merger::update(double dt) {
             }
             _active = false;
         }
+        return;
+    }
+
+    // try to unjam
+    if (_jammed || (!_active && !_in_transit_stack.empty())) {
+        _time_to_next_transfer = 0.0;
+        _active = true;
     }
 }
 

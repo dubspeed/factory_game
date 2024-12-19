@@ -84,8 +84,12 @@ namespace Fac {
     class GameWorldEntity {
     public:
         [[nodiscard]] virtual int getId() const = 0;
+
         virtual ~GameWorldEntity() = default;
+
         virtual void update(double dt) = 0;
+
+        std::string name = "GameWorldEntity";
     };
 
     class IInputLink {
@@ -143,7 +147,8 @@ namespace Fac {
             return false;
         }
 
-        void update(double dt) override {}
+        void update(double dt) override {
+        }
 
         int getId() const override { return _id; }
 
@@ -294,7 +299,8 @@ namespace Fac {
         [[nodiscard]] Resource getResource() const { return _active_resource; }
         [[nodiscard]] ResourceQuality getQuality() const { return _quality; }
 
-        void update(double dt) override {}
+        void update(double dt) override {
+        }
 
         int getId() const override { return _id; }
 
