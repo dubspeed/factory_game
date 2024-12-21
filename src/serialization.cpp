@@ -7,7 +7,8 @@ using namespace Fac;
 void Fac::to_json(json &j, const SingleMachine &r) {
     auto id = r.getId();
     auto m = json{
-        {"id", id}, {"recipe", r.getRecipe()}, {"processing", r.processing}, {"progress", r.processing_progress}
+        {"id", id}, {"recipe", r.getRecipe()}, {"processing", r.processing}, {"progress", r.processing_progress},
+        {"name", r.name}
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
@@ -21,6 +22,7 @@ void Fac::from_json(const json &j, SingleMachine &r) {
     r._id = j.at("machine").at("id").get<int>();
     r._input_connections = j.at("machine").at("input").at("_input_connections").get<std::vector<InputConnection> >();
     r._output_stacks = j.at("machine").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
+    r.name = j.at("machine").at("name").get<std::string>();
 }
 
 void Fac::to_json(json &j, const InputConnection &r) {
@@ -43,7 +45,8 @@ void Fac::from_json(const json &j, InputConnection &r) {
 void Fac::to_json(json &j, const ResourceNode &r) {
     auto m =
             j["resourceNode"] = json{
-                {"id", r.getId()}, {"resource", r.getResource()}, {"quality", r.getQuality()}
+                {"id", r.getId()}, {"resource", r.getResource()}, {"quality", r.getQuality()},
+                {"name", r.name}
             };
 }
 
@@ -51,11 +54,13 @@ void Fac::from_json(const json &j, ResourceNode &r) {
     r.setResource(j.at("resourceNode").at("resource").get<Resource>());
     r.setResourceQuality(j.at("resourceNode").at("quality").get<ResourceQuality>());
     r._id = j.at("resourceNode").at("id").get<int>();
+    r.name = j.at("resourceNode").at("name").get<std::string>();
 }
 
 void Fac::to_json(json &j, const ResourceExtractor &r) {
     auto m = json{
-        {"id", r.getId()}, {"extractionProgress", r.extraction_progress}, {"extracting", r.extracting}, {"resNodeId", r._res_node_id}
+        {"id", r.getId()}, {"extractionProgress", r.extraction_progress}, {"extracting", r.extracting},
+        {"resNodeId", r._res_node_id}, {"name", r.name}
     };
     m["output"] = (OutputStackProvider) r;
     j["resourceExtractor"] = m;
@@ -66,7 +71,9 @@ void Fac::from_json(const json &j, ResourceExtractor &r) {
     r.extracting = j.at("resourceExtractor").at("extracting").get<bool>();
     r._res_node_id = j.at("resourceExtractor").at("resNodeId").get<int>();
     r._id = j.at("resourceExtractor").at("id").get<int>();
-    r._output_stacks = j.at("resourceExtractor").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
+    r._output_stacks = j.at("resourceExtractor").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<
+        Stack> > >();
+    r.name = j.at("resourceExtractor").at("name").get<std::string>();
 }
 
 
@@ -74,7 +81,8 @@ void Fac::from_json(const json &j, ResourceExtractor &r) {
 void Fac::to_json(json &j, const Belt &r) {
     auto id = r.getId();
     auto m = json{
-        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()}
+        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()},
+        {"name", r.name}
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
@@ -90,12 +98,14 @@ void Fac::from_json(const json &j, Belt &r) {
     r._id = j.at("itemMover").at("id").get<int>();
     r._input_connections = j.at("itemMover").at("input").at("_input_connections").get<std::vector<InputConnection> >();
     r._output_stacks = j.at("itemMover").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
+    r.name = j.at("itemMover").at("name").get<std::string>();
 }
 
 void Fac::to_json(json &j, const Merger &r) {
     auto id = r.getId();
     auto m = json{
-        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()}
+        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()},
+        {"name", r.name}
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
@@ -111,12 +121,14 @@ void Fac::from_json(const json &j, Merger &r) {
     r._id = j.at("itemMover").at("id").get<int>();
     r._input_connections = j.at("itemMover").at("input").at("_input_connections").get<std::vector<InputConnection> >();
     r._output_stacks = j.at("itemMover").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
+    r.name = j.at("itemMover").at("name").get<std::string>();
 }
 
 void Fac::to_json(json &j, const Splitter &r) {
     auto id = r.getId();
     auto m = json{
-        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()}
+        {"id", id}, {"itemsPerSecond", r.getItemsPerSecond()}, {"active", r.getActive()}, {"jammed", r.getJammed()},
+        {"name", r.name}
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
@@ -132,14 +144,14 @@ void Fac::from_json(const json &j, Splitter &r) {
     r._id = j.at("itemMover").at("id").get<int>();
     r._input_connections = j.at("itemMover").at("input").at("_input_connections").get<std::vector<InputConnection> >();
     r._output_stacks = j.at("itemMover").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
+    r.name = j.at("itemMover").at("name").get<std::string>();
 }
-
 
 
 void Fac::to_json(json &j, const Storage &r) {
     auto id = r.getId();
     auto m = json{
-                    {"id", id}, {"max_item_stacks", r._max_item_stacks}
+        {"id", id}, {"max_item_stacks", r._max_item_stacks}, {"name", r.name}
     };
     m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
@@ -149,12 +161,12 @@ void Fac::to_json(json &j, const Storage &r) {
 
 void Fac::from_json(const json &j, Storage &r) {
     r._id = j.at("storage").at("id").get<int>();
-    r._input_connections = j.at("storage").at("input").at("_input_connections").get<std::vector<InputConnection>>();
-    r._output_stacks = j.at("storage").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack>>>();
+    r._input_connections = j.at("storage").at("input").at("_input_connections").get<std::vector<InputConnection> >();
+    r._output_stacks = j.at("storage").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
     r._max_item_stacks = j.at("storage").at("max_item_stacks").get<int>();
-    r._content_stacks = j.at("storage").at("content").get<std::vector<Stack>>();
+    r._content_stacks = j.at("storage").at("content").get<std::vector<Stack> >();
+    r.name = j.at("storage").at("name").get<std::string>();
 }
-
 
 
 void Fac::to_json(json &j, const GameWorld &r) {

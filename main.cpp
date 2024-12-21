@@ -91,32 +91,88 @@ void linkWithBelt(Connection const &from_output, Connection const &to_input) {
 
 void setupGameWorld2(GameWorld &w) {
     RESOURCE_NODE(iron_node, IronOre, Normal);
-    RESOURCE_NODE(copper_node, CopperOre, Normal);
-
     EXTRACTOR(iron_extractor, iron_node);
-    EXTRACTOR(copper_extractor, copper_node);
+
+    SPLITTER(sp1);
+    LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
+
+    // Goal is to make around 300 screws per minute
+    // We need 2.5 smelters, 5 rod crafters, and 7.5 screws crafters
+
+    CRAFTER(smelter1, IronIngot);
+    LINK(FROM_SLOT0(sp1), TO_SLOT0(smelter1));
+
+    SPLITTER(sp2);
+    LINK(FROM_SLOT1(sp1), TO_SLOT0(sp2));
+
+    CRAFTER(smelter2, IronIngot);
+    LINK(FROM_SLOT0(sp2), TO_SLOT0(smelter2));
+
+    SPLITTER(sp3);
+    LINK(FROM_SLOT1(sp2), TO_SLOT0(sp3));
+
+    CRAFTER(smelter3, IronIngot);
+    LINK(FROM_SLOT0(sp3), TO_SLOT0(smelter3));
 
     MERGER(mg1);
-    LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(mg1));
-    LINK(FROM_SLOT0(copper_extractor), TO_SLOT1(mg1));
+    LINK(FROM_SLOT0(smelter1), TO_SLOT0(mg1));
+    LINK(FROM_SLOT0(smelter2), TO_SLOT1(mg1));
 
-    SMALL_STORAGE(storage1);
-    LINK(FROM_SLOT0(mg1), TO_SLOT0(storage1));
+    MERGER(mg2);
+    LINK(FROM_SLOT0(mg1), TO_SLOT0(mg2));
+    LINK(FROM_SLOT0(smelter3), TO_SLOT1(mg2));
+
+    // SMALL_STORAGE(storage1);
+    // LINK(FROM_SLOT0(mg2), TO_SLOT0(storage1));
+
+    std::cout << "Iron Ingot Setup complete\n";
+
+    // start IRON_ ROD production
+
+    SPLITTER(sp4);
+    LINK(FROM_SLOT0(mg2), TO_SLOT0(sp4));
+    CRAFTER(rod1, IronRod);
+    LINK(FROM_SLOT0(sp4), TO_SLOT0(rod1));
+
+    SPLITTER(sp5);
+    LINK(FROM_SLOT1(sp4), TO_SLOT0(sp5));
+    CRAFTER(rod2, IronRod);
+    LINK(FROM_SLOT0(sp5), TO_SLOT0(rod2));
+
+    SPLITTER(sp6);
+    LINK(FROM_SLOT1(sp5), TO_SLOT0(sp6));
+    CRAFTER(rod3, IronRod);
+    LINK(FROM_SLOT0(sp6), TO_SLOT0(rod3));
+
+    SPLITTER(sp7);
+    LINK(FROM_SLOT1(sp6), TO_SLOT0(sp7));
+    CRAFTER(rod4, IronRod);
+    LINK(FROM_SLOT0(sp7), TO_SLOT0(rod4));
+    CRAFTER(rod5, IronRod);
+    LINK(FROM_SLOT1(sp7), TO_SLOT0(rod5));
+
+    MERGER(mg3);
+    LINK(FROM_SLOT0(rod1), TO_SLOT0(mg3));
+    LINK(FROM_SLOT0(rod2), TO_SLOT1(mg3));
+
+    MERGER(mg4);
+    LINK(FROM_SLOT0(mg3), TO_SLOT0(mg4));
+    LINK(FROM_SLOT0(rod3), TO_SLOT1(mg4));
+
+    MERGER(mg5);
+    LINK(FROM_SLOT0(mg4), TO_SLOT0(mg5));
+    LINK(FROM_SLOT0(rod4), TO_SLOT1(mg5));
+
+    MERGER(mg6);
+    LINK(FROM_SLOT0(mg5), TO_SLOT0(mg6));
+    LINK(FROM_SLOT0(rod5), TO_SLOT1(mg6));
+
+    // ROD production complete
+
+    SMALL_STORAGE(storage2);
+    LINK(FROM_SLOT0(mg6), TO_SLOT0(storage2));
 
 
-    // SPLITTER(sp1);
-    // LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
-    // SPLITTER(sp2);
-    // LINK(FROM_SLOT0(sp1), TO_SLOT0(sp2));
-    //
-    // CRAFTER(smelter1, IronIngot);
-    // LINK(FROM_SLOT1(sp1), TO_SLOT0(smelter1));
-    // CRAFTER(smelter2, IronIngot);
-    // LINK(FROM_SLOT0(sp2), TO_SLOT0(smelter2));
-    // CRAFTER(smelter3, IronIngot);
-    // LINK(FROM_SLOT1(sp2), TO_SLOT0(smelter3));
-    //
-    // std::cout << "Iron Ingot Setup complete\n";
 }
 
 
@@ -201,8 +257,9 @@ int main(int argc, char *argv[]) {
             }
             if (auto m = std::dynamic_pointer_cast<Storage>(entity); m) {
                 std::cout << "Stor:" << std::setw(2) << m->getId() << " " << m->name;
-                std::cout << "/Iron:" << m->getAmount(Resource::IronOre);
-                std::cout << "/Cop:" << m->getAmount(Resource::CopperOre);
+                std::cout << "/Iron:" << m->getAmount(Resource::IronIngot);
+                std::cout << "/Rods:" << m->getAmount(Resource::IronRod);
+                // std::cout << "/Cop:" << m->getAmount(Resource::CopperOre);
                 std::cout << std::endl;
             }
         }
