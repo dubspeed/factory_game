@@ -176,7 +176,7 @@ void Splitter::update(double dt) {
 
     if (_active && !_in_transit_stack.empty()) {
         _time_to_next_transfer += dt;
-        if (_time_to_next_transfer >= _items_per_s * 1000) {
+        if (_time_to_next_transfer >= 1000 / _items_per_s) {
             _time_to_next_transfer = 0.0;
 
             auto can_add_to_first = getOutputStack(0)->canAdd(1, _in_transit_stack[0]);
@@ -250,7 +250,7 @@ void Merger::update(double dt) {
 
     if (_active && !_in_transit_stack.empty()) {
         _time_to_next_transfer += dt;
-        if (_time_to_next_transfer >= _items_per_s * 1000) {
+        if (_time_to_next_transfer >= 1000 / _items_per_s) {
             _time_to_next_transfer = 0.0;
             if (getOutputStack(0)->canAdd(1, _in_transit_stack[0])) {
                 getOutputStack(0)->addOne(_in_transit_stack[0]);

@@ -46,10 +46,16 @@ void signal_handler(int signal) {
 #define TO_SLOT0(a) CONNECTION(a, 0)
 #define TO_SLOT1(a) CONNECTION(a, 1)
 #define LINK(from_output, to_input) linkWithBelt(from_output, to_input)
+#define LINK_T2(from_output, to_input) linkWithBelt(from_output, to_input, 120)
+#define LINK_T3(from_output, to_input) linkWithBelt(from_output, to_input, 270)
+#define LINK_T4(from_output, to_input) linkWithBelt(from_output, to_input, 480)
+#define LINK_T5(from_output, to_input) linkWithBelt(from_output, to_input, 780)
+#define LINK_T6(from_output, to_input) linkWithBelt(from_output, to_input, 1200)
 #define CREATE(id, type) auto const id = create(fac, type()) ; id->name = "" LIT(id)
 #define CRAFTER(name, recipe) CREATE(name, Machine); name->setRecipe(recipe_##recipe)
-#define SPLITTER(name) CREATE(name, Splitter)
-#define MERGER(name) CREATE(name, Merger)
+// Merger ans Spliiter have no tier, so they operate at each frame
+#define SPLITTER(name) CREATE(name, Splitter) ; name->setItemsPerSecond(1000);
+#define MERGER(name) CREATE(name, Merger) ; name->setItemsPerSecond(1000);
 #define EXTRACTOR_T1(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(60)
 #define EXTRACTOR_T2(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(120)
 #define EXTRACTOR_T3(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(240)
@@ -71,16 +77,25 @@ void connectInput(Connection const &from_input, Connection const &to_output) {
     connector->connectInput(from_input.second, to_output.first, to_output.second);
 }
 
-void linkWithBelt(Connection const &from_output, Connection const &to_input) {
+void linkWithBelt(Connection const &from_output, Connection const &to_input, int const rpm = 60) {
     CREATE(belt, Belt);
+    belt->setItemsPerSecond(rpm / 60.0);
     connectInput(FROM_SLOT0(belt), from_output);
     connectInput(to_input, TO_SLOT0(belt));
 }
 
 void setupGameWorldSimple(Factory &w) {
-    RESOURCE_NODE(iron_node, IronOre, Impure);
-    EXTRACTOR_T1(iron_extractor, iron_node);
+    RESOURCE_NODE(iron_node, IronOre, Pure);
+    EXTRACTOR_T3(iron_extractor, iron_node);
 
+    SPLITTER(sp1);
+    LINK_T4(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
+
+    MERGER(mg1);
+    LINK_T4(FROM_SLOT0(sp1), TO_SLOT0(mg1));
+
+    SMALL_STORAGE(storage1);
+    LINK_T4(FROM_SLOT0(mg1), TO_SLOT0(storage1));
     std::cout << "Setup complete\n";
 }
 
@@ -92,41 +107,23 @@ void setupGameWorldComplex(Factory &w) {
     SPLITTER(sp1);
     LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
 
-    // Goal is to make around 300 screws per minute
-    // We need 2.5 smelters, 5 rod crafters, and 7.5 screws crafters
+    // Goal is to make around 240 screws per minute
+    // We need 2 smelters, 4 rod crafters, and 6 screws crafters
 
     CRAFTER(smelter1, IronIngot);
     LINK(FROM_SLOT0(sp1), TO_SLOT0(smelter1));
 
-    SPLITTER(sp2);
-    LINK(FROM_SLOT1(sp1), TO_SLOT0(sp2));
-
     CRAFTER(smelter2, IronIngot);
-    LINK(FROM_SLOT0(sp2), TO_SLOT0(smelter2));
-
-    SPLITTER(sp3);
-    LINK(FROM_SLOT1(sp2), TO_SLOT0(sp3));
-
-    CRAFTER(smelter3, IronIngot);
-    LINK(FROM_SLOT0(sp3), TO_SLOT0(smelter3));
+    LINK(FROM_SLOT1(sp1), TO_SLOT0(smelter2));
 
     MERGER(mg1);
     LINK(FROM_SLOT0(smelter1), TO_SLOT0(mg1));
     LINK(FROM_SLOT0(smelter2), TO_SLOT1(mg1));
 
-    MERGER(mg2);
-    LINK(FROM_SLOT0(mg1), TO_SLOT0(mg2));
-    LINK(FROM_SLOT0(smelter3), TO_SLOT1(mg2));
-
-    // SMALL_STORAGE(storage1);
-    // LINK(FROM_SLOT0(mg2), TO_SLOT0(storage1));
-
-    std::cout << "Iron Ingot Setup complete\n";
-
-    // start IRON_ ROD production
+    // start IRON_ ROD production, 4 rod crafters
 
     SPLITTER(sp4);
-    LINK(FROM_SLOT0(mg2), TO_SLOT0(sp4));
+    LINK(FROM_SLOT0(mg1), TO_SLOT0(sp4));
     CRAFTER(rod1, IronRod);
     LINK(FROM_SLOT0(sp4), TO_SLOT0(rod1));
 
@@ -139,13 +136,8 @@ void setupGameWorldComplex(Factory &w) {
     LINK(FROM_SLOT1(sp5), TO_SLOT0(sp6));
     CRAFTER(rod3, IronRod);
     LINK(FROM_SLOT0(sp6), TO_SLOT0(rod3));
-
-    SPLITTER(sp7);
-    LINK(FROM_SLOT1(sp6), TO_SLOT0(sp7));
     CRAFTER(rod4, IronRod);
-    LINK(FROM_SLOT0(sp7), TO_SLOT0(rod4));
-    CRAFTER(rod5, IronRod);
-    LINK(FROM_SLOT1(sp7), TO_SLOT0(rod5));
+    LINK(FROM_SLOT1(sp6), TO_SLOT0(rod4));
 
     MERGER(mg3);
     LINK(FROM_SLOT0(rod1), TO_SLOT0(mg3));
@@ -159,16 +151,62 @@ void setupGameWorldComplex(Factory &w) {
     LINK(FROM_SLOT0(mg4), TO_SLOT0(mg5));
     LINK(FROM_SLOT0(rod4), TO_SLOT1(mg5));
 
-    MERGER(mg6);
-    LINK(FROM_SLOT0(mg5), TO_SLOT0(mg6));
-    LINK(FROM_SLOT0(rod5), TO_SLOT1(mg6));
-
     // ROD production complete
 
-    SMALL_STORAGE(storage2);
-    LINK(FROM_SLOT0(mg6), TO_SLOT0(storage2));
+    // SMALL_STORAGE(storage2);
+    // LINK(FROM_SLOT0(mg5), TO_SLOT0(storage2));
 
+    SPLITTER(screw_sp1);
+    LINK(FROM_SLOT0(mg5), TO_SLOT0(screw_sp1));
 
+    CRAFTER(screw1, Screw);
+    LINK(FROM_SLOT0(screw_sp1), TO_SLOT0(screw1));
+
+    SPLITTER(screw_sp2);
+    LINK(FROM_SLOT1(screw_sp1), TO_SLOT0(screw_sp2));
+
+    CRAFTER(screw2, Screw);
+    LINK(FROM_SLOT0(screw_sp2), TO_SLOT0(screw2));
+
+    SPLITTER(screw_sp3);
+    LINK(FROM_SLOT1(screw_sp2), TO_SLOT0(screw_sp3));
+
+    CRAFTER(screw3, Screw);
+    LINK(FROM_SLOT0(screw_sp3), TO_SLOT0(screw3));
+
+    SPLITTER(screw_sp4);
+    LINK(FROM_SLOT1(screw_sp3), TO_SLOT0(screw_sp4));
+
+    CRAFTER(screw4, Screw);
+    LINK(FROM_SLOT0(screw_sp4), TO_SLOT0(screw4));
+
+    SPLITTER(screw_sp5);
+    LINK(FROM_SLOT1(screw_sp4), TO_SLOT0(screw_sp5));
+
+    CRAFTER(screw5, Screw);
+    LINK(FROM_SLOT0(screw_sp5), TO_SLOT0(screw5));
+
+    SPLITTER(screw_sp6);
+    LINK(FROM_SLOT1(screw_sp5), TO_SLOT0(screw_sp6));
+
+    MERGER(screw_mg1);
+    LINK(FROM_SLOT0(screw1), TO_SLOT0(screw_mg1));
+    LINK(FROM_SLOT0(screw2), TO_SLOT1(screw_mg1));
+
+    MERGER(screw_mg2);
+    LINK_T3(FROM_SLOT0(screw_mg1), TO_SLOT0(screw_mg2));
+    LINK(FROM_SLOT0(screw3), TO_SLOT1(screw_mg2));
+
+    MERGER(screw_mg3);
+    LINK_T3(FROM_SLOT0(screw_mg2), TO_SLOT0(screw_mg3));
+    LINK(FROM_SLOT0(screw4), TO_SLOT1(screw_mg3));
+
+    MERGER(screw_mg4);
+    LINK_T3(FROM_SLOT0(screw_mg3), TO_SLOT0(screw_mg4));
+    LINK(FROM_SLOT0(screw5), TO_SLOT1(screw_mg4));
+
+    SMALL_STORAGE(storage3);
+    LINK_T3(FROM_SLOT0(screw_mg4), TO_SLOT0(storage3));
 }
 
 
@@ -195,7 +233,7 @@ int main(int argc, char *argv[]) {
 
     } else {
         // setupGameWorldComplex(w);
-        setupGameWorldSimple(fac);
+        setupGameWorldComplex(fac);
         std::cout << "Created new world\n";
     }
 
@@ -235,6 +273,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/J:" << m->getJammed();
+                std::cout << "/PPM:" << m->getOutputRpm();
                 std::cout << std::endl;
             }
             if (auto m = std::dynamic_pointer_cast<Splitter>(entity); m) {
@@ -243,6 +282,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/O1:" << m->getOutputStack(1)->getAmount();
+                std::cout << "/PPM:" << m->getOutputRpm();
                 std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
@@ -252,6 +292,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/I1:" << m->getInputStack(1)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/PPM:" << m->getOutputRpm();
                 std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
@@ -264,13 +305,15 @@ int main(int argc, char *argv[]) {
             }
             if (auto m = std::dynamic_pointer_cast<Storage>(entity); m) {
                 std::cout << "Stor:" << std::setw(2) << m->getId() << " " << m->name;
+                std::cout << "/Ore:" << m->getAmount(Resource::IronOre);
                 std::cout << "/Iron:" << m->getAmount(Resource::IronIngot);
                 std::cout << "/Rods:" << m->getAmount(Resource::IronRod);
+                std::cout << "/Screw:" << m->getAmount(Resource::Screw);
                 // std::cout << "/Cop:" << m->getAmount(Resource::CopperOre);
                 std::cout << std::endl;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // 60 FPS cap
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
 

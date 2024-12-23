@@ -285,7 +285,8 @@ namespace Fac {
 
         void setDefaultSpeed(int const speed) {
             _default_extraction_speed = speed;
-            update_extraction_speed();
+            if (_res_node_id > -1)
+                update_extraction_speed();
         }
 
         int getDefaultSpeed() const {
@@ -400,6 +401,10 @@ namespace Fac {
         }
 
         std::vector<Resource> _in_transit_stack;
+
+        float getOutputRpm() const {
+            return _items_per_s * 60;
+        }
 
     protected:
         double _time_to_next_transfer = 0.0;

@@ -12,7 +12,7 @@ void Factory::update(double const dt) const {
     }
 }
 
-// Updates the Gameworld by 1 ms at a time, until the given time has passed, then calls the callback
+// Updates the Factory by 1 ms at a time, until the given time has passed, then calls the callback
 void Factory::advanceBy(double const dt, std::function<void()> const &callback) const {
     for (auto i = 0; i <= dt; i++) {
         update(1);
@@ -20,7 +20,7 @@ void Factory::advanceBy(double const dt, std::function<void()> const &callback) 
     callback();
 }
 
-void logTimeStep(double deltaTime) {
+void logTimeStep(double const deltaTime) {
     std::cout << "DT:" << deltaTime << " ms" << std::endl;
 }
 
