@@ -4,7 +4,7 @@
 #include <functional>
 using namespace Fac;
 
-void Fac::to_json(json &j, const SingleMachine &r) {
+void Fac::to_json(json &j, const Machine &r) {
     auto id = r.getId();
     auto m = json{
         {"id", id}, {"recipe", r.getRecipe()}, {"processing", r.processing}, {"progress", r.processing_progress},
@@ -15,7 +15,7 @@ void Fac::to_json(json &j, const SingleMachine &r) {
     j["machine"] = m;
 }
 
-void Fac::from_json(const json &j, SingleMachine &r) {
+void Fac::from_json(const json &j, Machine &r) {
     r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
     r.processing = j.at("machine").at("processing").get<bool>();
     r.processing_progress = j.at("machine").at("progress").get<double>();
@@ -169,7 +169,7 @@ void Fac::from_json(const json &j, Storage &r) {
 }
 
 
-void Fac::to_json(json &j, const GameWorld &r) {
+void Fac::to_json(json &j, const Factory &r) {
     j["entities"] = json::array();
 
     // Loop through each entity in the vector
@@ -183,9 +183,9 @@ void Fac::to_json(json &j, const GameWorld &r) {
             } else if (std::is_same_v<std::decay_t<decltype(*e)>, Stack>) {
                 entity_json["type"] = "Stack";
                 entity_json["data"] = *std::dynamic_pointer_cast<Stack>(e);
-            } else if (std::is_same_v<std::decay_t<decltype(*e)>, SingleMachine>) {
-                entity_json["type"] = "SingleMachine";
-                entity_json["data"] = *std::dynamic_pointer_cast<SingleMachine>(e);
+            } else if (std::is_same_v<std::decay_t<decltype(*e)>, Machine>) {
+                entity_json["type"] = "Machine";
+                entity_json["data"] = *std::dynamic_pointer_cast<Machine>(e);
             } else if (std::is_same_v<std::decay_t<decltype(*e)>, ResourceNode>) {
                 entity_json["type"] = "ResourceNode";
                 entity_json["data"] = *std::dynamic_pointer_cast<ResourceNode>(e);
@@ -210,7 +210,7 @@ void Fac::to_json(json &j, const GameWorld &r) {
     }
 }
 
-void Fac::from_json(const json &j, GameWorld &r) {
+void Fac::from_json(const json &j, Factory &r) {
     r._entities.clear();
     r._entity_map.clear();
 
@@ -229,9 +229,9 @@ void Fac::from_json(const json &j, GameWorld &r) {
             auto stack = std::make_shared<Stack>(s);
             r._entities.push_back(stack);
             r._entity_map[stack->getId()] = stack;
-        } else if (type == "SingleMachine") {
-            auto m = entity_json["data"].get<SingleMachine>();
-            auto machine = std::make_shared<SingleMachine>(m);
+        } else if (type == "Machine") {
+            auto m = entity_json["data"].get<Machine>();
+            auto machine = std::make_shared<Machine>(m);
             r._entities.push_back(machine);
             r._entity_map[machine->getId()] = machine;
         } else if (type == "ResourceNode") {

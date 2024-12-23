@@ -30,8 +30,8 @@ TEST(JSON, RecipeTest) {
     std::cout << j.dump(4) << std::endl;
 }
 
-TEST(JSON, SingleMachine) {
-    auto m = SingleMachine();
+TEST(JSON, Machine) {
+    auto m = Machine();
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
         .products = {{Resource::IronIngot, 1}},
@@ -42,7 +42,7 @@ TEST(JSON, SingleMachine) {
     m.getOutputStack(0)->addAmount(33, Resource::IronIngot);
     json j = m;
     // std::cout << j.dump(4) << std::endl;
-    auto const m2 = j.get<SingleMachine>();
+    auto const m2 = j.get<Machine>();
     EXPECT_EQ(m2.getOutputRpm(), 15);
     EXPECT_EQ(m2.getInputRpm(), 75);
     EXPECT_EQ(m2.getRecipe().value().inputs[0].amount, 5);
@@ -60,7 +60,7 @@ TEST(JSON, SingleMachine) {
 }
 
 TEST(JSON, LinkedStacks) {
-    auto m = std::make_shared<SingleMachine>();
+    auto m = std::make_shared<Machine>();
     auto b = std::make_shared<Belt>(1);
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
@@ -75,7 +75,7 @@ TEST(JSON, LinkedStacks) {
     j["belts"] = *b;
     std::cout << j.dump(4) << std::endl;
 
-    auto m2 = std::make_shared<SingleMachine>(j["machines"].get<SingleMachine>());
+    auto m2 = std::make_shared<Machine>(j["machines"].get<Machine>());
     auto b2 = std::make_shared<Belt>(j["belts"].get<Belt>());
 
     b2->reconnectLinks([m2](int id) {
@@ -90,8 +90,8 @@ TEST(JSON, LinkedStacks) {
 }
 
 TEST(JSON, GameWorld) {
-    auto w = GameWorld();
-    auto m = std::make_shared<SingleMachine>();
+    auto w = Factory();
+    auto m = std::make_shared<Machine>();
     auto b = std::make_shared<Belt>(1);
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
@@ -106,9 +106,9 @@ TEST(JSON, GameWorld) {
     json j = w;
     std::cout << j.dump(4) << std::endl;
     w.clearWorld();
-    auto w2 = j.get<GameWorld>();
+    auto w2 = j.get<Factory>();
     EXPECT_EQ(w2.getEntities().size(), 2);
-    auto m2 = std::dynamic_pointer_cast<SingleMachine>(w2.getEntities()[0]);
+    auto m2 = std::dynamic_pointer_cast<Machine>(w2.getEntities()[0]);
     auto b2 = std::dynamic_pointer_cast<Belt>(w2.getEntities()[1]);
     EXPECT_EQ(b2->getId(), b->getId());
     EXPECT_EQ(m2->getId(), m->getId());

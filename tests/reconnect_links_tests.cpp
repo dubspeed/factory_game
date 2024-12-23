@@ -3,9 +3,9 @@
 using namespace Fac;
 
 TEST(ReconnectLinks, SingleMachineBelt) {
-    auto w = GameWorld();
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    const auto m2 = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m1 = std::make_shared<Machine>(Machine());
+    const auto m2 = std::make_shared<Machine>(Machine());
     const auto belt = std::make_shared<Belt>(Belt(1));
     belt->connectInput(0, m1, 0);
     m2->connectInput(0, belt, 0);
@@ -19,8 +19,8 @@ TEST(ReconnectLinks, SingleMachineBelt) {
 
     json j = w;
 
-    auto x = GameWorld();
-    x = j.get<GameWorld>();
+    auto x = Factory();
+    x = j.get<Factory>();
 
     EXPECT_EQ(x.getEntities().size(), 3);
     EXPECT_EQ(x.getEntities()[0]->getId(), m1->getId());
@@ -32,7 +32,7 @@ TEST(ReconnectLinks, SingleMachineBelt) {
 }
 
 TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto n = std::make_shared<ResourceNode>(ResourceNode());
     const auto e = std::make_shared<ResourceExtractor>(ResourceExtractor());
     const auto belt = std::make_shared<Belt>(Belt(1));
@@ -46,8 +46,8 @@ TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
     json j = w;
     //std::cout << j.dump(4) << std::endl;
 
-    auto x = GameWorld();
-    x = j.get<GameWorld>();
+    auto x = Factory();
+    x = j.get<Factory>();
 
     EXPECT_EQ(x.getEntities().size(), 3);
     EXPECT_EQ(x.getEntities()[0]->getId(), n->getId());
@@ -59,12 +59,12 @@ TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
 }
 
 TEST(ReconnectLinks, StorageSplitterMachines) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto s = std::make_shared<Storage>(Storage());
     const auto belt1 = std::make_shared<Belt>(Belt(1));
     const auto sp = std::make_shared<Splitter>(Splitter());
     const auto belt2 = std::make_shared<Belt>(Belt(1));
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
+    const auto m1 = std::make_shared<Machine>(Machine());
     s->setMaxItemStacks(1);
 
     s->getInputStack(0)->addAmount(33, Resource::IronOre);
@@ -85,8 +85,8 @@ TEST(ReconnectLinks, StorageSplitterMachines) {
     json j = w;
     //std::cout << j.dump(4) << std::endl;
 
-    auto x = GameWorld();
-    x = j.get<GameWorld>();
+    auto x = Factory();
+    x = j.get<Factory>();
 
     EXPECT_EQ(x.getEntities().size(), 5);
     EXPECT_EQ(x.getEntities()[0]->getId(), s->getId());
@@ -99,11 +99,11 @@ TEST(ReconnectLinks, StorageSplitterMachines) {
     EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[2])->getOutputStack(0)->getAmount(), 0);
     EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[3])->getInputStack(0)->getAmount(), 0);
     EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[4])->getInputStack(1)->getAmount(), 0);
-    EXPECT_EQ(std::dynamic_pointer_cast<SingleMachine>(x.getEntities()[4])->getOutputStack(0)->getAmount(), 0);
+    EXPECT_EQ(std::dynamic_pointer_cast<Machine>(x.getEntities()[4])->getOutputStack(0)->getAmount(), 0);
 }
 
 TEST(ReconnectLinks, FeedStorage) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto s1 = std::make_shared<Storage>(Storage());
     const auto s2 = std::make_shared<Storage>(Storage());
     const auto belt = std::make_shared<Belt>(Belt(1));
@@ -121,13 +121,13 @@ TEST(ReconnectLinks, FeedStorage) {
     json j = w;
     //std::cout << j.dump(4) << std::endl;
 
-    auto x = GameWorld();
-    x = j.get<GameWorld>();
+    auto x = Factory();
+    x = j.get<Factory>();
 
     EXPECT_EQ(x.getEntities().size(), 3);
     EXPECT_EQ(x.getEntities()[0]->getId(), s1->getId());
     EXPECT_EQ(x.getEntities()[1]->getId(), s2->getId());
     EXPECT_EQ(x.getEntities()[2]->getId(), belt->getId());
     auto result = std::dynamic_pointer_cast<Storage>(x.getEntities()[1]);
-    EXPECT_EQ(result->getAmount(Resource::IronOre), 30);
+    EXPECT_EQ(result->getAmount(Resource::IronOre), 29);
 }

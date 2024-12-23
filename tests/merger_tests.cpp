@@ -4,13 +4,13 @@
 using namespace Fac;
 
 TEST(Merger, CanMergeTwoBelts) {
-    auto w = GameWorld();
+    auto w = Factory();
     auto mg = std::make_shared<Merger>(Merger());
     auto belt1 = std::make_shared<Belt>(Belt(1));
     auto belt2 = std::make_shared<Belt>(Belt(1));
     auto belt3 = std::make_shared<Belt>(Belt(1));
-    auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    auto m2 = std::make_shared<SingleMachine>(SingleMachine());
+    auto m1 = std::make_shared<Machine>(Machine());
+    auto m2 = std::make_shared<Machine>(Machine());
     auto storage = std::make_shared<Storage>(Storage());
     storage->setMaxItemStacks(99);
     

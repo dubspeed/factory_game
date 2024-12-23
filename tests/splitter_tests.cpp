@@ -4,12 +4,15 @@
 using namespace Fac;
 
 TEST(Splitter, ShouldDoSomeSplitting) {
-    auto w = GameWorld();
+    auto w = Factory();
     auto sp = std::make_shared<Splitter>(Splitter());
 
-    auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    auto m2 = std::make_shared<SingleMachine>(SingleMachine());
-    auto m3 = std::make_shared<SingleMachine>(SingleMachine());
+    // setup: a machine that produces iron ingots
+    // and two machines that produce iron plates
+    // connected via a splitter
+    auto m1 = std::make_shared<Machine>(Machine());
+    auto m2 = std::make_shared<Machine>(Machine());
+    auto m3 = std::make_shared<Machine>(Machine());
 
     m1->setRecipe(recipe_IronIngot);
     m1->getInputStack(0)->addAmount(2, recipe_IronIngot.inputs[0].resource);
@@ -37,7 +40,8 @@ TEST(Splitter, ShouldDoSomeSplitting) {
 
     // the first takes 2 seconds to produces and 3 seconds to
     // pass belt1, belt2 and end up in m2
-    w.advanceBy(2000 + 3000, [&]() {
+    // + 3 frames for the belt to move the item
+    w.advanceBy(2000 + 3003, [&]() {
         EXPECT_EQ(m1->getInput()->getAmount(), 0);
         EXPECT_EQ(m2->getInput()->getAmount(), 1);
         EXPECT_EQ(m3->getInput()->getAmount(), 0);

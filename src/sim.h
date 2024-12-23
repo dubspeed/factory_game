@@ -9,7 +9,7 @@
 namespace Fac {
     typedef std::vector<std::variant<
         std::shared_ptr<Stack>,
-        std::shared_ptr<SingleMachine>,
+        std::shared_ptr<Machine>,
         std::shared_ptr<Belt>,
         std::shared_ptr<Merger>,
         std::shared_ptr<Splitter>,
@@ -26,13 +26,13 @@ namespace Fac {
 
     // a global container, that can add and remove game entities
     // and runs the core game loop
-    class GameWorld {
-        friend void to_json(json &, const GameWorld &);
+    class Factory {
+        friend void to_json(json &, const Factory &);
 
-        friend void from_json(const json &, GameWorld &);
+        friend void from_json(const json &, Factory &);
 
     public:
-        GameWorld() = default;
+        Factory() = default;
 
         // TODO: costly, as it casts each entity to a shared pointer of GameworldEnt
         [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity> > getEntities() const {
@@ -65,7 +65,7 @@ namespace Fac {
                 _entities.push_back(belt);
             } else if (auto stack = std::dynamic_pointer_cast<Stack>(entity)) {
                 _entities.push_back(stack);
-            } else if (auto machine = std::dynamic_pointer_cast<SingleMachine>(entity)) {
+            } else if (auto machine = std::dynamic_pointer_cast<Machine>(entity)) {
                 _entities.push_back(machine);
             } else if (auto extr = std::dynamic_pointer_cast<ResourceExtractor>(entity)) {
                 _entities.push_back(extr);
@@ -118,8 +118,8 @@ namespace Fac {
         std::map<int, std::shared_ptr<GameWorldEntity> > _entity_map;
     };
 
-    void to_json(json &j, const GameWorld &r);
+    void to_json(json &j, const Factory &r);
 
-    void from_json(const json &j, GameWorld &r);
+    void from_json(const json &j, Factory &r);
 }
 #endif //SIM_H

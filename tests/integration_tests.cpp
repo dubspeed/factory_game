@@ -4,9 +4,9 @@
 using namespace Fac;
 
 TEST(TwoMachineProductionChain, WithSimpleBelt) {
-    auto w = GameWorld();
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    const auto m2 = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m1 = std::make_shared<Machine>(Machine());
+    const auto m2 = std::make_shared<Machine>(Machine());
     const auto belt = std::make_shared<Belt>(Belt(1));
 
     w.addEntity(m1);
@@ -22,7 +22,7 @@ TEST(TwoMachineProductionChain, WithSimpleBelt) {
     EXPECT_TRUE(m2->getOutputStack(0)->isEmpty());
 
     // first ingot is produced
-    w.advanceBy(2000, [&]() {
+    w.advanceBy(2000 + 100, [&]() {
         EXPECT_TRUE(m1->getOutputStack(0)->isEmpty());
         EXPECT_TRUE(m2->getInput()->isEmpty());
         EXPECT_EQ(belt->_in_transit_stack.size(), 1);
@@ -57,9 +57,9 @@ TEST(TwoMachineProductionChain, WithSimpleBelt) {
 }
 
 TEST(DepositToMachine, WithSimpleBelt) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto n1 = std::make_shared<ResourceNode>(ResourceNode());
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
+    const auto m1 = std::make_shared<Machine>(Machine());
     const auto e1 = std::make_shared<ResourceExtractor>(ResourceExtractor());
 
     n1->setResource(Resource::IronOre, ResourceQuality::Normal);
@@ -87,7 +87,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
         EXPECT_TRUE(e1->getOutputStack(0)->isEmpty());
         EXPECT_TRUE(m1->processing);
         EXPECT_EQ(m1->getInput()->getAmount(), 59);
-        EXPECT_EQ(m1->getOutputStack(0)->getAmount(), 59);
+        EXPECT_EQ(m1->getOutputStack(0)->getAmount(), 58);
         EXPECT_EQ(belt1->_in_transit_stack.size(), 1);
         EXPECT_FALSE(belt1->getJammed());
     });

@@ -359,11 +359,11 @@ namespace Fac {
     void from_json(const json &j, ResourceExtractor &r);
 
     /**
-    * SingleMachine
+    * Machine
     * -------------
     */
-    class SingleMachine : public GameWorldEntity, public InputStackProvider, public OutputStackProvider {
-        friend void from_json(const json &, SingleMachine &);
+    class Machine : public GameWorldEntity, public InputStackProvider, public OutputStackProvider {
+        friend void from_json(const json &, Machine &);
 
     public:
         static constexpr int fixed_input_slots = 0; // TODO allow multiple input slots for bigger machines
@@ -371,7 +371,7 @@ namespace Fac {
         double processing_progress = 0.0;
         bool processing = false;
 
-        SingleMachine(): InputStackProvider(2), OutputStackProvider(1) {
+        Machine(): InputStackProvider(2), OutputStackProvider(1) {
             // input stack 0 will be the connection to the belt
             // input stack 1 is the internal buffer
             InputStackProvider::getInputStack(1)->setMaxStackSize(MAX_STACK_SIZE);
@@ -402,9 +402,9 @@ namespace Fac {
         std::optional<Recipe> _active_recipe;
     };
 
-    void to_json(json &j, const SingleMachine &r);
+    void to_json(json &j, const Machine &r);
 
-    void from_json(const json &j, SingleMachine &r);
+    void from_json(const json &j, Machine &r);
 
 
     /**
@@ -416,6 +416,7 @@ namespace Fac {
                       public std::enable_shared_from_this<ItemMover> {
     public:
         int getItemsPerSecond() const { return _items_per_s; }
+        void setItemsPerSecond(int const items_per_s) { _items_per_s = items_per_s; }
 
         bool getActive() const { return _active; }
         bool getJammed() const { return _jammed; }

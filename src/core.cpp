@@ -8,7 +8,7 @@ static int _calculate_rpm(std::optional<int> const processing_time, std::optiona
     return rpm == 0 ? 0 : (60 / processing_time.value_or(0)) * amount.value_or(0);
 }
 
-void SingleMachine::setRecipe(std::optional<Recipe> const &r) {
+void Machine::setRecipe(std::optional<Recipe> const &r) {
     // if (r->inputs.size() > fixed_input_slots + 1) {
     //     throw std::runtime_error("This machine only has one input slot");
     // }
@@ -29,11 +29,11 @@ void SingleMachine::setRecipe(std::optional<Recipe> const &r) {
     stack_out->lockResource(r->inputs[fixed_input_slots].resource);
 }
 
-std::optional<Recipe> SingleMachine::getRecipe() const {
+std::optional<Recipe> Machine::getRecipe() const {
     return _active_recipe;
 }
 
-int SingleMachine::getInputRpm() const {
+int Machine::getInputRpm() const {
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
         return _calculate_rpm(r.processing_time_s, r.inputs[fixed_input_slots].amount);
@@ -41,7 +41,7 @@ int SingleMachine::getInputRpm() const {
     return 0;
 }
 
-int SingleMachine::getOutputRpm() const {
+int Machine::getOutputRpm() const {
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
         return _calculate_rpm(r.processing_time_s, r.products[fixed_output_slots].amount);
@@ -49,7 +49,7 @@ int SingleMachine::getOutputRpm() const {
     return 0;
 }
 
-void SingleMachine::update(double const dt) {
+void Machine::update(double const dt) {
     if (!_active_recipe.has_value()) {
         return;
     }
@@ -60,6 +60,10 @@ void SingleMachine::update(double const dt) {
     if (!connected_input->isEmpty() && interal_input_stack->canAdd(1, connected_input->getResource())) {
         interal_input_stack->addOne(connected_input->getResource());
         connected_input->removeOne();
+    }
+
+    if (processing) {
+        processing_progress += dt;
     }
 
     const auto [inputs, products, processing_time_s] = _active_recipe.value();
@@ -84,12 +88,9 @@ void SingleMachine::update(double const dt) {
         return;
     }
 
-    if (processing) {
-        processing_progress += dt;
-    }
 }
 
-bool SingleMachine::canStartProduction() const {
+bool Machine::canStartProduction() const {
     if (processing)
         return false;
 
@@ -131,7 +132,7 @@ void Belt::update(double dt) {
 
     if (_active && !_in_transit_stack.empty()) {
         _time_to_next_transfer += dt;
-        if (_time_to_next_transfer >= _items_per_s * 1000) {
+        if (_time_to_next_transfer >= 1000 / _items_per_s) {
             _time_to_next_transfer = 0.0;
             if (getOutputStack(0)->canAdd(1, _in_transit_stack[0])) {
                 // TODO if output stack resource is not set, we should set it here
@@ -272,6 +273,10 @@ void Merger::update(double dt) {
 }
 
 void ResourceExtractor::update(double const dt) {
+    if (extracting) {
+        extraction_progress += dt;
+    }
+
     if (!extracting) {
         // can we start extracting?
         if (getOutputStack(0)->getAmount() <= MAX_STACK_SIZE) {
@@ -286,9 +291,5 @@ void ResourceExtractor::update(double const dt) {
         extraction_progress = 0.0;
         extracting = false;
         return;
-    }
-
-    if (extracting) {
-        extraction_progress += dt;
     }
 }

@@ -4,8 +4,8 @@
 using namespace Fac;
 
 TEST(Storage, CanStoreOneItem) {
-    auto w = GameWorld();
-    const auto m = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m = std::make_shared<Machine>(Machine());
     const auto b = std::make_shared<Belt>(Belt(1));
     const auto s = std::make_shared<Storage>(Storage());
     s->setMaxItemStacks(1);
@@ -27,8 +27,8 @@ TEST(Storage, CanStoreOneItem) {
 }
 
 TEST(Storage, CanStoreMultipleItems) {
-    auto w = GameWorld();
-    const auto m = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m = std::make_shared<Machine>(Machine());
     const auto b = std::make_shared<Belt>(Belt(1));
     const auto s = std::make_shared<Storage>(Storage());
     s->setMaxItemStacks(2);
@@ -52,7 +52,7 @@ TEST(Storage, CanStoreMultipleItems) {
 }
 
 TEST(Storage, CanNotStoreMoreWhenFull) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto s = std::make_shared<Storage>(Storage());
     s->setMaxItemStacks(1);
     w.addEntity(s);
@@ -76,7 +76,7 @@ TEST(Storage, CanNotStoreMoreWhenFull) {
 }
 
 TEST(Storage, CanStoreMoreStacksOfTheSameItem) {
-    auto w = GameWorld();
+    auto w = Factory();
     const auto s = std::make_shared<Storage>(Storage());
     s->setMaxItemStacks(2);
     w.addEntity(s);

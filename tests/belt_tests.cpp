@@ -6,9 +6,9 @@
 using namespace Fac;
 
 TEST(Belt, ConnectTwoBelts) {
-    auto w = GameWorld();
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    const auto m2 = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m1 = std::make_shared<Machine>(Machine());
+    const auto m2 = std::make_shared<Machine>(Machine());
     const auto belt1 = std::make_shared<Belt>(Belt(1));
     const auto belt2 = std::make_shared<Belt>(Belt(1));
 
@@ -38,9 +38,9 @@ TEST(Belt, ConnectTwoBelts) {
 }
 
 TEST(Belt, ConnectTenBelts) {
-    auto w = GameWorld();
-    const auto m1 = std::make_shared<SingleMachine>(SingleMachine());
-    const auto m2 = std::make_shared<SingleMachine>(SingleMachine());
+    auto w = Factory();
+    const auto m1 = std::make_shared<Machine>(Machine());
+    const auto m2 = std::make_shared<Machine>(Machine());
     w.addEntity(m1);
     w.addEntity(m2);
     m1->setRecipe(recipe_IronIngot);
@@ -61,10 +61,10 @@ TEST(Belt, ConnectTenBelts) {
     // to make things work, this is a limitation
     belts[0]->connectInput(0, m1, 0);
     for (int i = 1; i <= NUM_BELTS - 2; i++) {
-        belts[i]->connectInput(0, belts[i-1], 0);
+        belts[i]->connectInput(0, belts[i - 1], 0);
     }
-    belts[NUM_BELTS-1]->connectInput(0, belts[NUM_BELTS-2], 0);
-    m2->connectInput(0, belts[NUM_BELTS-1], 0);
+    belts[NUM_BELTS - 1]->connectInput(0, belts[NUM_BELTS - 2], 0);
+    m2->connectInput(0, belts[NUM_BELTS - 1], 0);
 
     m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, recipe_IronIngot.inputs[0].resource);
     EXPECT_EQ(m2->getOutputStack(0)->getAmount(), 0);
@@ -87,4 +87,35 @@ TEST(Belt, HasAOutputStackOfOneItem) {
     EXPECT_EQ(belt->getOutputStack(0)->getAmount(), 1);
     EXPECT_FALSE(belt->getOutputStack(0)->canAdd(1, Resource::IronOre));
     EXPECT_TRUE(belt->getOutputStack(0)->isFull());
+}
+
+TEST(Belt, HasDifferentSpeed) {
+    auto w = Factory();
+    auto machine = std::make_shared<Machine>(Machine());
+    machine->setRecipe(recipe_IronIngot);
+    machine->getOutputStack(0)->addAmount(100, Resource::IronIngot);
+
+    auto belt = std::make_shared<Belt>(1);
+    belt->setItemsPerSecond(10);
+    EXPECT_EQ(belt->getItemsPerSecond(), 10);
+
+    auto storage = std::make_shared<Storage>(Storage());
+    storage->setMaxItemStacks(100);
+
+    storage->connectInput(0, belt, 0);
+    belt->connectInput(0, machine, 0);
+
+    w.addEntity(machine);
+    w.addEntity(belt);
+    w.addEntity(storage);
+
+    w.advanceBy((5 * 1000), [&]() {
+        EXPECT_EQ(machine->getOutputStack(0)->getAmount(), 50);
+        EXPECT_EQ(storage->getAmount(Resource::IronIngot), 49);
+    });
+
+    w.advanceBy((5 * 1000) + 100, [&]() {
+        EXPECT_EQ(machine->getOutputStack(0)->getAmount(), 0);
+        EXPECT_EQ(storage->getAmount(Resource::IronIngot), 100);
+    });
 }

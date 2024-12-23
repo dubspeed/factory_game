@@ -4,7 +4,7 @@
 using namespace Fac;
 
 TEST(SingleMachine, CanProduce) {
-    auto m = SingleMachine();
+    auto m = Machine();
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
         .products = {{Resource::IronIngot, 1}},
@@ -23,7 +23,7 @@ TEST(SingleMachine, CanProduce) {
 }
 
 TEST(SingleMachine, HasAInputStack) {
-    auto m = std::make_shared<SingleMachine>();
+    auto m = std::make_shared<Machine>();
     auto s = m->getInputStack(0);
     EXPECT_TRUE(s->isEmpty());
     s->addAmount(MAX_STACK_SIZE, Resource::IronOre);
@@ -38,7 +38,7 @@ TEST(SingleMachine, HasAInputStack) {
 }
 
 TEST(SingleMachine, HasAInputStackIndipendentOfConnectedOutput) {
-    auto m = std::make_shared<SingleMachine>();
+    auto m = std::make_shared<Machine>();
     auto b = std::make_shared<Belt>(1);
     auto s = m->getInputStack(0);
     EXPECT_TRUE(s->isEmpty());

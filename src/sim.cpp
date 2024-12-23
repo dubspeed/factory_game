@@ -4,7 +4,7 @@
 
 using namespace Fac;
 
-void GameWorld::update(double const dt) const {
+void Factory::update(double const dt) const {
     for (const auto& variant : _entities) {
         std::visit([dt](const auto& e) {
             e->update(dt);
@@ -13,7 +13,7 @@ void GameWorld::update(double const dt) const {
 }
 
 // Updates the Gameworld by 1 ms at a time, until the given time has passed, then calls the callback
-void GameWorld::advanceBy(double const dt, std::function<void()> const &callback) const {
+void Factory::advanceBy(double const dt, std::function<void()> const &callback) const {
     for (auto i = 0; i <= dt; i++) {
         update(1);
     }
@@ -24,7 +24,7 @@ void logTimeStep(double deltaTime) {
     std::cout << "DT:" << deltaTime << " ms" << std::endl;
 }
 
-void GameWorld::processWorldStep() const {
+void Factory::processWorldStep() const {
     using Clock = std::chrono::steady_clock;
     using TimePoint = std::chrono::time_point<Clock>;
 

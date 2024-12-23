@@ -17,16 +17,16 @@ TEST(RecipeTests, Recipe) {
 
 TEST(RecipeTests, InAMachine) {
     auto r = recipe_IronIngot;
-    auto m = SingleMachine();
+    auto m = Machine();
     m.setRecipe(r);
     EXPECT_EQ(m.getOutputRpm(), 30);
     EXPECT_EQ(m.getInputRpm(), 30);
 }
 
 TEST(RecipeTests, SimpleProductionCheckWithTime) {
-    auto w = GameWorld();
+    auto w = Factory();
     // Setup a single smelter
-    const auto m = std::make_shared<SingleMachine>(SingleMachine());
+    const auto m = std::make_shared<Machine>(Machine());
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
         .products = {{Resource::IronIngot, 1}},
@@ -36,13 +36,13 @@ TEST(RecipeTests, SimpleProductionCheckWithTime) {
     m->setRecipe(r);
     m->getInput()->addAmount(5, r.inputs[0].resource);;
     for (auto i = 0; i < 4; i++) {
-        w.update(1000);
+        w.update(999);
         EXPECT_EQ(m->processing, true);
         EXPECT_TRUE(m->getInput()->isEmpty());
         EXPECT_TRUE(m->getOutputStack(0)->isEmpty());
-        EXPECT_EQ(m->processing_progress, 1000 * (i+1));
+        EXPECT_EQ(m->processing_progress, 999 * i);
     }
-    w.update(1000);
+    w.update(1010);
     EXPECT_EQ(m->processing, false);
     EXPECT_TRUE(m->getInput()->isEmpty());
     EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
@@ -50,9 +50,9 @@ TEST(RecipeTests, SimpleProductionCheckWithTime) {
 }
 
 TEST(RecipeTests, LetsPassTime) {
-    auto w = GameWorld();
+    auto w = Factory();
     // Setup a single smelter
-    const auto m = std::make_shared<SingleMachine>(SingleMachine());
+    const auto m = std::make_shared<Machine>(Machine());
 
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
@@ -69,19 +69,23 @@ TEST(RecipeTests, LetsPassTime) {
     // add some raw material
     m->getInput()->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
 
+    auto const time = r.processing_time_s * 1000;
+
     auto in = m->getInput();
     // move time to the future, by iterating via delta_t
-    for (auto i = 0; i < 12001; i++) {
+    // the +10 everywhere are just to make sure we are not missing any
+    // stuff by adding some extra frame for processing
+    for (auto i = 0; i <= time * 3 + 10; i++) {
         w.update(1);
-        if (i % 4000 == 0) {
-            // std::cout << "Time: " << i << std::endl;
+        if (i + 10 % time + 10 == 0) {
+            std::cout << "Time: " << i << std::endl;
             if (i > 0)
-                EXPECT_EQ(in->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / 4000 + 1));
-            if (i == 4000)
+                EXPECT_EQ(in->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / time));
+            if (i == time + 10)
                 EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
-            if (i == 8000)
+            if (i == time * 2 + 10)
                 EXPECT_EQ(m->getOutputStack(0)->getAmount(), 2);
-            if (i == 12000)
+            if (i == time * 3 + 10)
                 EXPECT_EQ(m->getOutputStack(0)->getAmount(), 3);
         }
     }
