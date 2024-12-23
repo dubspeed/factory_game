@@ -57,16 +57,16 @@ void Fac::from_json(const json &j, ResourceNode &r) {
     r.name = j.at("resourceNode").at("name").get<std::string>();
 }
 
-void Fac::to_json(json &j, const ResourceExtractor &r) {
+void Fac::to_json(json &j, const Extractor &r) {
     auto m = json{
         {"id", r.getId()}, {"extractionProgress", r.extraction_progress}, {"extracting", r.extracting},
-        {"resNodeId", r._res_node_id}, {"name", r.name}
+        {"resNodeId", r._res_node_id}, {"name", r.name}, { "defaultExtractionSpeed", r._default_extraction_speed }
     };
     m["output"] = (OutputStackProvider) r;
     j["resourceExtractor"] = m;
 }
 
-void Fac::from_json(const json &j, ResourceExtractor &r) {
+void Fac::from_json(const json &j, Extractor &r) {
     r.extraction_progress = j.at("resourceExtractor").at("extractionProgress").get<double>();
     r.extracting = j.at("resourceExtractor").at("extracting").get<bool>();
     r._res_node_id = j.at("resourceExtractor").at("resNodeId").get<int>();
@@ -74,6 +74,7 @@ void Fac::from_json(const json &j, ResourceExtractor &r) {
     r._output_stacks = j.at("resourceExtractor").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<
         Stack> > >();
     r.name = j.at("resourceExtractor").at("name").get<std::string>();
+    r._default_extraction_speed = j.at("resourceExtractor").at("defaultExtractionSpeed").get<int>();
 }
 
 
@@ -195,9 +196,9 @@ void Fac::to_json(json &j, const Factory &r) {
             } else if (std::is_same_v<std::decay_t<decltype(*e)>, Splitter>) {
                 entity_json["type"] = "Splitter";
                 entity_json["data"] = *std::dynamic_pointer_cast<Splitter>(e);
-            } else if (std::is_same_v<std::decay_t<decltype(*e)>, ResourceExtractor>) {
+            } else if (std::is_same_v<std::decay_t<decltype(*e)>, Extractor>) {
                 entity_json["type"] = "ResourceExtractor";
-                entity_json["data"] = *std::dynamic_pointer_cast<ResourceExtractor>(e);
+                entity_json["data"] = *std::dynamic_pointer_cast<Extractor>(e);
             } else if (std::is_same_v<std::decay_t<decltype(*e)>, Storage>) {
                 entity_json["type"] = "Storage";
                 entity_json["data"] = *std::dynamic_pointer_cast<Storage>(e);
@@ -240,8 +241,8 @@ void Fac::from_json(const json &j, Factory &r) {
             r._entities.push_back(node);
             r._entity_map[node->getId()] = node;
         } else if (type == "ResourceExtractor") {
-            auto m = entity_json["data"].get<ResourceExtractor>();
-            auto extractor = std::make_shared<ResourceExtractor>(m);
+            auto m = entity_json["data"].get<Extractor>();
+            auto extractor = std::make_shared<Extractor>(m);
             r._entities.push_back(extractor);
             r._entity_map[extractor->getId()] = extractor;
         } else if (type == "Merger") {

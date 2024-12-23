@@ -14,7 +14,7 @@ namespace Fac {
         std::shared_ptr<Merger>,
         std::shared_ptr<Splitter>,
         std::shared_ptr<ResourceNode>,
-        std::shared_ptr<ResourceExtractor>,
+        std::shared_ptr<Extractor>,
         std::shared_ptr<Storage>
     > > GameWorldEntities;
 
@@ -67,7 +67,7 @@ namespace Fac {
                 _entities.push_back(stack);
             } else if (auto machine = std::dynamic_pointer_cast<Machine>(entity)) {
                 _entities.push_back(machine);
-            } else if (auto extr = std::dynamic_pointer_cast<ResourceExtractor>(entity)) {
+            } else if (auto extr = std::dynamic_pointer_cast<Extractor>(entity)) {
                 _entities.push_back(extr);
             } else if (auto node = std::dynamic_pointer_cast<ResourceNode>(entity)) {
                 _entities.push_back(node);

@@ -4,6 +4,7 @@
 #include <csignal>
 #include <thread>
 #include <unistd.h>
+#include <chrono>
 
 #include "nlohmann/json.hpp"
 
@@ -11,7 +12,7 @@ using namespace Fac;
 using json = nlohmann::json;
 
 volatile sig_atomic_t stop = 0;
-auto w = Factory();
+auto fac = Factory();
 char *save_file;
 
 void run_generators() {
@@ -34,24 +35,9 @@ void saveWorld(Factory &w) {
 void signal_handler(int signal) {
     stop = 1;
     std::cout << "Signal received: " << signal << std::endl;
-    saveWorld(w);
+    saveWorld(fac);
 }
 
-void setupGameWorld(Factory &w) {
-    auto m1 = std::make_shared<Machine>(Machine());
-    w.addEntity(m1);
-    auto m2 = std::make_shared<Machine>(Machine());
-    w.addEntity(m2);
-    auto belt = std::make_shared<Belt>(1);
-    w.addEntity(belt);
-    m1->setRecipe(recipe_IronIngot);
-    m2->setRecipe(recipe_IronPlate);
-    belt->connectInput(0, m1, 0);
-    m2->connectInput(0, belt, 0);
-    m1->getInputStack(0)->addAmount(MAX_STACK_SIZE, Resource::IronOre);
-
-    std::cout << "Setup complete\n";
-}
 
 #define LIT(x) #x
 #define CONNECTION(a, b) std::make_pair<std::shared_ptr<GameWorldEntity> const&, int>(a, b)
@@ -60,11 +46,13 @@ void setupGameWorld(Factory &w) {
 #define TO_SLOT0(a) CONNECTION(a, 0)
 #define TO_SLOT1(a) CONNECTION(a, 1)
 #define LINK(from_output, to_input) linkWithBelt(from_output, to_input)
-#define CREATE(id, type) auto const id = create(w, type()) ; id->name = "" LIT(id)
+#define CREATE(id, type) auto const id = create(fac, type()) ; id->name = "" LIT(id)
 #define CRAFTER(name, recipe) CREATE(name, Machine); name->setRecipe(recipe_##recipe)
 #define SPLITTER(name) CREATE(name, Splitter)
 #define MERGER(name) CREATE(name, Merger)
-#define EXTRACTOR(name, node) CREATE(name, ResourceExtractor); name->setResourceNode(node)
+#define EXTRACTOR_T1(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(60)
+#define EXTRACTOR_T2(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(120)
+#define EXTRACTOR_T3(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(240)
 #define RESOURCE_NODE(name, resource, quality) CREATE(name, ResourceNode) ; name->setResource(Resource::resource); name->setResourceQuality(ResourceQuality::quality)
 #define SMALL_STORAGE(name) CREATE(name, Storage) ; name->setMaxItemStacks(12)
 
@@ -89,9 +77,17 @@ void linkWithBelt(Connection const &from_output, Connection const &to_input) {
     connectInput(to_input, TO_SLOT0(belt));
 }
 
-void setupGameWorld2(Factory &w) {
+void setupGameWorldSimple(Factory &w) {
+    RESOURCE_NODE(iron_node, IronOre, Impure);
+    EXTRACTOR_T1(iron_extractor, iron_node);
+
+    std::cout << "Setup complete\n";
+}
+
+
+void setupGameWorldComplex(Factory &w) {
     RESOURCE_NODE(iron_node, IronOre, Normal);
-    EXTRACTOR(iron_extractor, iron_node);
+    EXTRACTOR_T1(iron_extractor, iron_node);
 
     SPLITTER(sp1);
     LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
@@ -193,12 +189,13 @@ int main(int argc, char *argv[]) {
     if (std::ifstream i(save_file); i) {
         json j;
         i >> j;
-        w = j.get<Factory>();
+        fac = j.get<Factory>();
         std::cout << "Loaded world from file\n";
         i.close();
 
     } else {
-        setupGameWorld2(w);
+        // setupGameWorldComplex(w);
+        setupGameWorldSimple(fac);
         std::cout << "Created new world\n";
     }
 
@@ -209,17 +206,26 @@ int main(int argc, char *argv[]) {
     std::cout << CSI + "s";
     std::cout << std::setprecision(0) << std::fixed;
 
+    using Clock = std::chrono::steady_clock;
+    using TimePoint = std::chrono::time_point<Clock>;
+    auto const startTime = Clock::now();
+
+
     // auto entities = w.getEntities();
     while (!stop) {
         std::cout << CSI + "2J";
-        w.processWorldStep();
-        for (auto &entity: w.getEntities()) {
+        auto const currentTime = Clock::now();
+        std::chrono::duration<double> const elapsed = currentTime - startTime;
+        std::cout << "Time: " << elapsed.count() << "s\n";
+        fac.processWorldStep();
+        for (auto &entity: fac.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
                 std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/I1:" << m->getInputStack(1)->getAmount();
                 std::cout << "/I0:" << m->getInputStack(0)->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/P:" << m->processing;
+                std::cout << "/PPM:" << m->getInputRpm();
                 std::cout << "/T:" << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress;
                 std::cout << std::endl;
             }
@@ -249,10 +255,11 @@ int main(int argc, char *argv[]) {
                 std::cout << "/J:" << m->getJammed();
                 std::cout << std::endl;
             }
-            if (auto m = std::dynamic_pointer_cast<ResourceExtractor>(entity); m) {
+            if (auto m = std::dynamic_pointer_cast<Extractor>(entity); m) {
                 std::cout << "Extr:" << std::setw(2) << m->getId() << " " << m->name;
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/EX:" << m->extracting;
+                std::cout << "/PPM:" << m->getOutputRpm();
                 std::cout << std::endl;
             }
             if (auto m = std::dynamic_pointer_cast<Storage>(entity); m) {

@@ -60,7 +60,7 @@ TEST(DepositToMachine, WithSimpleBelt) {
     auto w = Factory();
     const auto n1 = std::make_shared<ResourceNode>(ResourceNode());
     const auto m1 = std::make_shared<Machine>(Machine());
-    const auto e1 = std::make_shared<ResourceExtractor>(ResourceExtractor());
+    const auto e1 = std::make_shared<Extractor>(Extractor());
 
     n1->setResource(Resource::IronOre, ResourceQuality::Normal);
     // belt between extractor and machine

@@ -34,7 +34,7 @@ TEST(ReconnectLinks, SingleMachineBelt) {
 TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
     auto w = Factory();
     const auto n = std::make_shared<ResourceNode>(ResourceNode());
-    const auto e = std::make_shared<ResourceExtractor>(ResourceExtractor());
+    const auto e = std::make_shared<Extractor>(Extractor());
     const auto belt = std::make_shared<Belt>(Belt(1));
     e->setResourceNode(n);
     belt->connectInput(0, e, 0);
@@ -53,7 +53,7 @@ TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
     EXPECT_EQ(x.getEntities()[0]->getId(), n->getId());
     EXPECT_EQ(x.getEntities()[1]->getId(), e->getId());
     EXPECT_EQ(x.getEntities()[2]->getId(), belt->getId());
-    EXPECT_EQ(std::dynamic_pointer_cast<ResourceExtractor>(x.getEntities()[1])->getResourceNode()->getId(), n->getId());
+    EXPECT_EQ(std::dynamic_pointer_cast<Extractor>(x.getEntities()[1])->getResourceNode()->getId(), n->getId());
     EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[1])->getOutputStack(0)->getAmount(), 10);
     EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[2])->getInputStack(0)->getAmount(), 10);
 }

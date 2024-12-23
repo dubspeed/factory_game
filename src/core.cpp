@@ -1,6 +1,5 @@
 #include "core.h"
 
-#include <functional>
 using namespace Fac;
 
 static int _calculate_rpm(std::optional<int> const processing_time, std::optional<int> const amount) {
@@ -272,7 +271,7 @@ void Merger::update(double dt) {
     }
 }
 
-void ResourceExtractor::update(double const dt) {
+void Extractor::update(double const dt) {
     if (extracting) {
         extraction_progress += dt;
     }
@@ -286,7 +285,7 @@ void ResourceExtractor::update(double const dt) {
         return;
     }
 
-    if (extracting && extraction_progress >= 1000) {
+    if (extracting && extraction_progress >= 60 * 1000 / _extraction_speed) {
         getOutputStack(0)->addOne(_res_node->getResource());
         extraction_progress = 0.0;
         extracting = false;

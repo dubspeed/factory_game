@@ -42,6 +42,8 @@ add_executable(
         gameworld_tests.cpp
         ../src/serialization.cpp
         reconnect_links_tests.cpp
+        ../src/serialization.h
+        extractor_tests.cpp
 )
 
 target_compile_definitions(factory_tests PRIVATE TESTING)

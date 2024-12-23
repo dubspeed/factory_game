@@ -36,6 +36,7 @@ add_executable(factory_game
         src/tools/generators.h
         src/tools/generators.cpp
         src/serialization.cpp
+        src/serialization.h
 )
 
 add_subdirectory(tests)
