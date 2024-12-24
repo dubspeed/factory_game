@@ -3,7 +3,7 @@
 
 using namespace Fac;
 
-TEST(SingleMachine, CanProduce) {
+TEST(Machine, CanProduce) {
     auto m = Machine();
     Recipe r = {
         .inputs = {{Resource::IronOre, 5}},
@@ -22,7 +22,7 @@ TEST(SingleMachine, CanProduce) {
     EXPECT_EQ(m.canStartProduction(), true);
 }
 
-TEST(SingleMachine, HasAInputStack) {
+TEST(Machine, HasAInputStack) {
     auto m = std::make_shared<Machine>();
     auto s = m->getInputStack(0);
     EXPECT_TRUE(s->isEmpty());
@@ -37,7 +37,7 @@ TEST(SingleMachine, HasAInputStack) {
     EXPECT_EQ(s->getResource(), Resource::IronOre);
 }
 
-TEST(SingleMachine, HasAInputStackIndipendentOfConnectedOutput) {
+TEST(Machine, HasAInputStackIndipendentOfConnectedOutput) {
     auto m = std::make_shared<Machine>();
     auto b = std::make_shared<Belt>(1);
     auto s = m->getInputStack(0);
@@ -49,4 +49,28 @@ TEST(SingleMachine, HasAInputStackIndipendentOfConnectedOutput) {
     b->getOutputStack(0)->addAmount(1, Resource::IronIngot);
     EXPECT_EQ(s->getAmount(), MAX_STACK_SIZE);
     EXPECT_EQ(b->getOutputStack(0)->getAmount(), 1);
+}
+
+TEST(Machine, SetRecipe) {
+    auto m = std::make_shared<Machine>();
+    Recipe r = {
+        .inputs = {{Resource::IronOre, 5}},
+        .products = {{Resource::IronIngot, 1}},
+        .processing_time_s = 4
+    };
+
+    EXPECT_FALSE(m->getRecipe().has_value());
+    m->setRecipe(r);
+    EXPECT_TRUE(m->getRecipe().has_value());
+    EXPECT_EQ(m->getRecipe().value().inputs[0].amount, 5);
+    EXPECT_EQ(m->getRecipe().value().products[0].amount, 1);
+    EXPECT_EQ(m->getRecipe().value().processing_time_s, 4);
+    EXPECT_EQ(m->getRecipe().value().inputs[0].resource, Resource::IronOre);
+    EXPECT_EQ(m->getRecipe().value().products[0].resource, Resource::IronIngot);
+    EXPECT_EQ(m->getInputRpm(), 75);
+    EXPECT_EQ(m->getOutputRpm(), 15);
+    EXPECT_EQ(m->getOutputStack(0)->getResource(), Resource::IronIngot);
+    EXPECT_EQ(m->getOutputStack(0)->getAmount(), 0);
+    EXPECT_EQ(m->getInputStack(1)->getResource(), Resource::IronOre);
+    EXPECT_EQ(m->getInputStack(1)->getAmount(), 0);
 }

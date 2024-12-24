@@ -56,10 +56,12 @@ namespace Fac {
 
     class IInputLink {
     public:
+        virtual ~IInputLink() = default;
+
         virtual void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) = 0;
     };
 
-    struct Stack : public GameWorldEntity {
+    struct Stack final : GameWorldEntity {
         void clear() {
             _amount = 0;
             resource = std::nullopt;
@@ -80,7 +82,12 @@ namespace Fac {
         }
 
         int getAmount() const { return _amount; }
-        Resource getResource() const { return resource.value(); }
+        Resource getResource() const {
+            if (!resource.has_value()) {
+                return Resource::None;
+            }
+            return resource.value();
+        }
         void lockResource(Resource const &r) { resource = r; }
 
         bool removeAmount(int const amount) {

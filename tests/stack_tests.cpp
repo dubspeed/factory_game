@@ -48,3 +48,21 @@ TEST(Stack, CanSetDifferentResourceWhenEmpty) {
     EXPECT_FALSE(s.isEmpty());
     EXPECT_EQ(s.getResource(), Resource::CopperOre);
 }
+
+TEST(Stack, CanNotSetDifferentResourceWhenNotEmpty) {
+    auto s = Stack();
+    s.addAmount(10, Resource::IronOre);
+    EXPECT_FALSE(s.isEmpty());
+    s.addAmount(10, Resource::CopperOre);
+    EXPECT_FALSE(s.isEmpty());
+    EXPECT_EQ(s.getResource(), Resource::IronOre);
+}
+
+TEST(Stack, ReturnsNoneResourceWhenEmpty) {
+    auto s = Stack();
+    EXPECT_TRUE(s.isEmpty());
+    EXPECT_EQ(s.getResource(), Resource::None);
+    s.addAmount(10, Resource::IronOre);
+    EXPECT_FALSE(s.isEmpty());
+    EXPECT_EQ(s.getResource(), Resource::IronOre);
+}

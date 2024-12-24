@@ -25,7 +25,7 @@ void Machine::setRecipe(std::optional<Recipe> const &r) {
     stack_in->clear();
     stack_in->lockResource(r->inputs[fixed_input_slots].resource);
     stack_out->clear();
-    stack_out->lockResource(r->inputs[fixed_input_slots].resource);
+    stack_out->lockResource(r->products[fixed_output_slots].resource);
 }
 
 std::optional<Recipe> Machine::getRecipe() const {
@@ -104,6 +104,9 @@ bool Machine::canStartProduction() const {
         return false;
 
     if (getInputStack(1)->getAmount() < r.inputs[fixed_input_slots].amount)
+        return false;
+
+    if (!getOutputStack(0)->canAdd(r.products[fixed_output_slots].amount, r.products[fixed_output_slots].resource))
         return false;
 
     if (getOutputStack(0)->isFull())

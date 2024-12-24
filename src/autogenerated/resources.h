@@ -3,6 +3,7 @@
 
 namespace Fac {
 enum class Resource {
+	None,
 	CopperOre,
 	CopperIngot,
 	IronOre,

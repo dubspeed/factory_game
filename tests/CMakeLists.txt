@@ -26,7 +26,7 @@ add_executable(
         ../src/core.cpp
         recipe_tests.cpp
         integration_tests.cpp
-        single_machine_tests.cpp
+        machine_tests.cpp
         one_one_connection_tests.cpp
         belt_tests.cpp
         stack_tests.cpp
