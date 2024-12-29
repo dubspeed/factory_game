@@ -22,12 +22,15 @@ TEST(ReconnectLinks, SingleMachineBelt) {
     auto x = Factory();
     x = j.get<Factory>();
 
+    // advance a bit to move items around
+    x.advanceBy(1, [](){});
     EXPECT_EQ(x.getEntities().size(), 3);
     EXPECT_EQ(x.getEntities()[0]->getId(), m1->getId());
     EXPECT_EQ(x.getEntities()[1]->getId(), m2->getId());
     EXPECT_EQ(x.getEntities()[2]->getId(), belt->getId());
-    EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[0])->getOutputStack(0)->getAmount(), 10);
-    EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[2])->getOutputStack(0)->getAmount(), 1);
+    EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[0])->getOutputStack(0)->getAmount(), 9);
+    EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[2])->getOutputStack(0)->getAmount(), 0);
+    EXPECT_EQ(std::dynamic_pointer_cast<IInputProvider>(x.getEntities()[1])->getInputStack(0)->getAmount(), 1);
 }
 
 TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {

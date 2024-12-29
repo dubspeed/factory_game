@@ -13,7 +13,7 @@ TEST(Machine, CanProduce) {
     EXPECT_EQ(m.canStartProduction(), false);
     m.setRecipe(r);
     EXPECT_FALSE(m.canStartProduction());
-    m.getFirstInput()->addAmount(5, r.inputs[0].resource);
+    m.getInputStack(0)->addAmount(5, r.inputs[0].resource);
     EXPECT_TRUE(m.canStartProduction());
     m.getOutputStack(0)->addAmount(MAX_STACK_SIZE, r.products[0].resource);
     EXPECT_FALSE(m.canStartProduction());
@@ -85,16 +85,16 @@ TEST(Machine, MachineWithTwoInputResources) {
     };
     f.addEntity(m);
     m->setRecipe(r);
-    m->getFirstInput()->addAmount(5, Resource::IronOre);
-    m->getSecondInput()->addAmount(3, Resource::CopperOre);
-    EXPECT_EQ(m->getFirstInput()->getAmount(), 5);
-    EXPECT_EQ(m->getSecondInput()->getAmount(), 3);
+    m->getInputStack(0)->addAmount(5, Resource::IronOre);
+    m->getInputStack(1)->addAmount(3, Resource::CopperOre);
+    EXPECT_EQ(m->getInputStack(0)->getAmount(), 5);
+    EXPECT_EQ(m->getInputStack(1)->getAmount(), 3);
     EXPECT_EQ(m->getInputRpm(), 60);
     EXPECT_EQ(m->getOutputRpm(), 15);
 
     f.advanceBy(4 * 1000, [&]() {
-        EXPECT_EQ(m->getFirstInput()->getAmount(), 0);
-        EXPECT_EQ(m->getSecondInput()->getAmount(), 0);
+        EXPECT_EQ(m->getInputStack(0)->getAmount(), 0);
+        EXPECT_EQ(m->getInputStack(1)->getAmount(), 0);
         EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
     });
 }

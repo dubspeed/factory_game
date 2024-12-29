@@ -11,7 +11,7 @@ void Machine::setRecipe(std::optional<Recipe> const &r) {
     if (r->inputs.size() > _input_slots || r->products.size() > _output_slots) {
         throw std::runtime_error("Recipe does not fit in this machine");
     }
-    
+
     _active_recipe = r;
 
     // Note: the order of inputs in the recipe determines the slot they are added to

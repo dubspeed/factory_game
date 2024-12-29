@@ -235,8 +235,8 @@ int main(int argc, char *argv[]) {
         i.close();
 
     } else {
-        setupGameWorldSimple(fac);
-        // setupGameWorldComplex(fac);
+        // setupGameWorldSimple(fac);
+        setupGameWorldComplex(fac);
         std::cout << "Created new world\n";
     }
 
@@ -262,9 +262,12 @@ int main(int argc, char *argv[]) {
         for (auto &entity: fac.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
                 std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;
-                std::cout << "/I0:" << m->getFirstInput()->getAmount();
-                std::cout << "/I1:" << m->getSecondInput()->getAmount();
-                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                for (int i=0; i < m->getInputSlots(); i++) {
+                    std::cout << "/I" << i << ":" << m->getInputStack(i)->getAmount();
+                }
+                for (int i=0; i < m->getOutputSlots(); i++) {
+                    std::cout << "/O" << i << ":" << m->getOutputStack(i)->getAmount();
+                }
                 std::cout << "/P:" << m->processing;
                 std::cout << "/PPM:" << m->getInputRpm();
                 std::cout << "/T:" << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress;

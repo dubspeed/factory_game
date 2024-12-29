@@ -155,9 +155,9 @@ namespace Fac {
         [[nodiscard]] virtual std::shared_ptr<Stack> getInputStack(int slot) const = 0;
 
         // Connect this input to another component's output
-        virtual void connectInput(int inputSlot,
-                                  std::shared_ptr<GameWorldEntity> sourceEntity,
-                                  int sourceOutputSlot) = 0;
+        virtual void connectInput(int const inputSlot,
+                                  std::shared_ptr<GameWorldEntity> const sourceEntity,
+                                  int const sourceOutputSlot) = 0;
     };
 
 
@@ -217,9 +217,9 @@ namespace Fac {
             return connection.cachedStack;
         }
 
-        void connectInput(int inputSlot,
-                          std::shared_ptr<GameWorldEntity> sourceEntity,
-                          int sourceOutputSlot) override {
+        void connectInput(int const inputSlot,
+                          std::shared_ptr<GameWorldEntity> const sourceEntity,
+                          int const sourceOutputSlot) override {
             auto &connection = _input_connections.at(inputSlot);
             if (auto const provider = std::dynamic_pointer_cast<IOutputProvider>(sourceEntity)) {
                 connection.source = provider;
@@ -236,7 +236,7 @@ namespace Fac {
                 auto const &connection = _input_connections.at(inputSlot);
                 if (connection.cachedStack == nullptr && connection.sourceId != 0) {
                     connectInput(inputSlot, getEntityById(connection.sourceId), connection.sourceOutputSlot);
-                    std::cout << "Reconnected input " << inputSlot << " to " << connection.sourceId << std::endl;
+                    // std::cout << "Reconnected input " << inputSlot << " to " << connection.sourceId << std::endl;
                 }
             }
         }
@@ -354,13 +354,12 @@ namespace Fac {
     * Machine
     * -------------
     */
-    class Machine: public GameWorldEntity, public IInputProvider, public OutputStackProvider {
+    class Machine: public GameWorldEntity, public IInputProvider, public IInputLink, public OutputStackProvider {
         friend void from_json(const json &, Machine &);
 
         friend void to_json(json &j, const Machine &r);
 
     public:
-        std::vector<BufferedConnection> _input_connections;
 
         double processing_progress = 0.0;
         bool processing = false;
@@ -404,20 +403,21 @@ namespace Fac {
             connection.connectInput(0, sourceEntity, sourceOutputSlot);
         }
 
-        // // TODO better API needed here
-        [[nodiscard]] std::shared_ptr<Stack> getFirstInput() const {
-            return getInputStack(0);
+        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
+            for (auto &connection: _input_connections) {
+                connection.reconnectLinks(getEntityById);
+            }
         }
 
-        [[nodiscard]] std::shared_ptr<Stack> getSecondInput() const {
-            return getInputStack(1);
-        }
+        int getInputSlots() const { return _input_slots; }
+        int getOutputSlots() const { return _output_slots; }
 
     private:
         int _id = generate_id();
         std::optional<Recipe> _active_recipe;
         int _input_slots = 0;
         int _output_slots = 0;
+        std::vector<BufferedConnection> _input_connections;
     };
 
 
