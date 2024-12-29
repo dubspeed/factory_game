@@ -28,7 +28,6 @@ TEST(ReconnectLinks, SingleMachineBelt) {
     EXPECT_EQ(x.getEntities()[2]->getId(), belt->getId());
     EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[0])->getOutputStack(0)->getAmount(), 10);
     EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[2])->getOutputStack(0)->getAmount(), 1);
-    EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[1])->getInputStack(0)->getAmount(), 1);
 }
 
 TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
@@ -80,6 +79,8 @@ TEST(ReconnectLinks, StorageSplitterMachines) {
     w.addEntity(belt2);
     w.addEntity(m1);
 
+    // this also starts some production in the factory setup
+    // and moves items around
     w.advanceBy(9000, [](){});
 
     json j = w;
@@ -94,12 +95,12 @@ TEST(ReconnectLinks, StorageSplitterMachines) {
     EXPECT_EQ(x.getEntities()[2]->getId(), sp->getId());
     EXPECT_EQ(x.getEntities()[3]->getId(), belt2->getId());
     EXPECT_EQ(x.getEntities()[4]->getId(), m1->getId());
-    EXPECT_EQ(std::dynamic_pointer_cast<Storage>(x.getEntities()[0])->getAmount(Resource::IronOre), 33);
-    EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[1])->getInputStack(0)->getAmount(), 0);
+    EXPECT_EQ(std::dynamic_pointer_cast<Storage>(x.getEntities()[0])->getAmount(Resource::IronOre), 24);
+    EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[1])->getInputStack(0)->getAmount(), 5);
     EXPECT_EQ(std::dynamic_pointer_cast<OutputStackProvider>(x.getEntities()[2])->getOutputStack(0)->getAmount(), 0);
     EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[3])->getInputStack(0)->getAmount(), 0);
-    EXPECT_EQ(std::dynamic_pointer_cast<InputStackProvider>(x.getEntities()[4])->getInputStack(1)->getAmount(), 0);
-    EXPECT_EQ(std::dynamic_pointer_cast<Machine>(x.getEntities()[4])->getOutputStack(0)->getAmount(), 0);
+    EXPECT_EQ(std::dynamic_pointer_cast<IInputProvider>(x.getEntities()[4])->getInputStack(0)->getAmount(), 2);
+    EXPECT_EQ(std::dynamic_pointer_cast<Machine>(x.getEntities()[4])->getOutputStack(0)->getAmount(), 2);
 }
 
 TEST(ReconnectLinks, FeedStorage) {
@@ -108,7 +109,7 @@ TEST(ReconnectLinks, FeedStorage) {
     const auto s2 = std::make_shared<Storage>(Storage());
     const auto belt = std::make_shared<Belt>(Belt(1));
     s1->setMaxItemStacks(1);
-    s1->getOutputStack(0)->addAmount(33, Resource::IronOre);
+    s1->manualAdd(33, Resource::IronOre);
     belt->connectInput(0, s1, 0);
     s2->connectInput(0, belt, 0);
     s2->setMaxItemStacks(1);

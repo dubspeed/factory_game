@@ -8,9 +8,9 @@ void Fac::to_json(json &j, const Machine &r) {
     auto id = r.getId();
     auto m = json{
         {"id", id}, {"recipe", r.getRecipe()}, {"processing", r.processing}, {"progress", r.processing_progress},
-        {"name", r.name}
+        {"name", r.name}, {"inp_slots", r._input_slots}, {"out_slots", r._output_slots},
+        {"input", r._input_connections}
     };
-    m["input"] = (InputStackProvider) r;
     m["output"] = (OutputStackProvider) r;
     j["machine"] = m;
 }
@@ -20,7 +20,9 @@ void Fac::from_json(const json &j, Machine &r) {
     r.processing = j.at("machine").at("processing").get<bool>();
     r.processing_progress = j.at("machine").at("progress").get<double>();
     r._id = j.at("machine").at("id").get<int>();
-    r._input_connections = j.at("machine").at("input").at("_input_connections").get<std::vector<InputConnection> >();
+    r._input_slots = j.at("machine").at("inp_slots").get<int>();
+    r._output_slots = j.at("machine").at("out_slots").get<int>();
+    r._input_connections = j.at("machine").at("input").get<std::vector<BufferedConnection> >();
     r._output_stacks = j.at("machine").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
     r.name = j.at("machine").at("name").get<std::string>();
 }

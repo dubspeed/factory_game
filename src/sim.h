@@ -34,18 +34,11 @@ namespace Fac {
     public:
         Factory() = default;
 
-        // TODO: costly, as it casts each entity to a shared pointer of GameworldEnt
-        [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity> > getEntities() const {
-            auto result = std::vector<std::shared_ptr<GameWorldEntity> >();
+        [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity>> getEntities() const {
+            std::vector<std::shared_ptr<GameWorldEntity>> result;
             result.reserve(_entities.size());
-
-            for (const auto &entity: _entities) {
-                std::visit([&result](const auto &e) {
-                    using T = std::decay_t<decltype(*e)>;
-                    if constexpr (std::is_base_of_v<GameWorldEntity, T>) {
-                        result.push_back(std::make_shared<T>(*e));
-                    }
-                }, entity);
+            for (const auto &val: _entity_map | std::views::values) {
+                result.push_back(val);
             }
             return result;
         }
@@ -56,7 +49,7 @@ namespace Fac {
         }
 
         // templates need to be available at compile time, not just at link time, so
-        // these have to be defined here
+        // these have to be defined in the header
         template<typename T>
             requires std::derived_from<T, GameWorldEntity>
         void addEntity(std::shared_ptr<T> const &entity) {

@@ -49,7 +49,10 @@ void signal_handler(int signal) {
 #define LINK_T5(from_output, to_input) linkWithBelt(from_output, to_input, 780)
 #define LINK_T6(from_output, to_input) linkWithBelt(from_output, to_input, 1200)
 #define CREATE(id, type) auto const id = create(fac, type()) ; id->name = "" LIT(id)
-#define CRAFTER(name, recipe) CREATE(name, Machine); name->setRecipe(recipe_##recipe)
+#define SMELTER(id, resource) CREATE(id, Machine); id->setRecipe(recipe_##resource)
+#define CRAFTER(id, recipe) CREATE(id, Machine); id->setRecipe(recipe_##recipe)
+#define ASSEMBLER(id, recipe) auto const id = create(fac, Machine(2, 1)) ; id->name = "" LIT(id) ; id->setRecipe(recipe_##recipe)
+
 // Merger ans Spliiter have no tier, so they operate at each frame
 #define SPLITTER(name) CREATE(name, Splitter) ; name->setItemsPerSecond(1000);
 #define MERGER(name) CREATE(name, Merger) ; name->setItemsPerSecond(1000);
@@ -82,17 +85,20 @@ void linkWithBelt(Connection const &from_output, Connection const &to_input, int
 }
 
 void setupGameWorldSimple(Factory &w) {
-    RESOURCE_NODE(iron_node, IronOre, Pure);
-    EXTRACTOR_T3(iron_extractor, iron_node);
+    SMALL_STORAGE(plates);
+    SMALL_STORAGE(screws);
 
-    SPLITTER(sp1);
-    LINK_T4(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
+    plates->manualAdd(100, Resource::IronPlate);
+    screws->manualAdd(100, Resource::Screw);
 
-    MERGER(mg1);
-    LINK_T4(FROM_SLOT0(sp1), TO_SLOT0(mg1));
+    ASSEMBLER(reinforced_plate, ReinforcedIronPlate);
 
-    SMALL_STORAGE(storage1);
-    LINK_T4(FROM_SLOT0(mg1), TO_SLOT0(storage1));
+    LINK(FROM_SLOT0(plates), TO_SLOT0(reinforced_plate));
+    LINK(FROM_SLOT0(screws), TO_SLOT1(reinforced_plate));
+
+    SMALL_STORAGE(reinforced_plates_storage);
+    LINK(FROM_SLOT0(reinforced_plate), TO_SLOT0(reinforced_plates_storage));
+
     std::cout << "Setup complete\n";
 }
 
@@ -229,8 +235,8 @@ int main(int argc, char *argv[]) {
         i.close();
 
     } else {
-        // setupGameWorldComplex(w);
-        setupGameWorldComplex(fac);
+        setupGameWorldSimple(fac);
+        // setupGameWorldComplex(fac);
         std::cout << "Created new world\n";
     }
 
@@ -256,23 +262,23 @@ int main(int argc, char *argv[]) {
         for (auto &entity: fac.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
                 std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;
-                std::cout << "/I1:" << m->getInputStack(1)->getAmount();
-                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/I0:" << m->getFirstInput()->getAmount();
+                std::cout << "/I1:" << m->getSecondInput()->getAmount();
                 std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
                 std::cout << "/P:" << m->processing;
                 std::cout << "/PPM:" << m->getInputRpm();
                 std::cout << "/T:" << m->getRecipe().value().processing_time_s * 1000 - m->processing_progress;
                 std::cout << std::endl;
             }
-            // if (auto m = std::dynamic_pointer_cast<Belt>(entity); m) {
-            //     std::cout << "Belt:" << std::setw(2) << m->getId() << " " << m->name;
-            //     std::cout << "/TR:" << m->_in_transit_stack.size();
-            //     std::cout << "/I0:" << m->getInputStack(0)->getAmount();
-            //     std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
-            //     std::cout << "/J:" << m->getJammed();
-            //     std::cout << "/PPM:" << m->getOutputRpm();
-            //     std::cout << std::endl;
-            // }
+            if (auto m = std::dynamic_pointer_cast<Belt>(entity); m) {
+                std::cout << "Belt:" << std::setw(2) << m->getId() << " " << m->name;
+                std::cout << "/TR:" << m->_in_transit_stack.size();
+                std::cout << "/I0:" << m->getInputStack(0)->getAmount();
+                std::cout << "/O0:" << m->getOutputStack(0)->getAmount();
+                std::cout << "/J:" << m->getJammed();
+                std::cout << "/PPM:" << m->getOutputRpm();
+                std::cout << std::endl;
+            }
             // if (auto m = std::dynamic_pointer_cast<Splitter>(entity); m) {
             //     std::cout << "Spli:" << std::setw(2) << m->getId() << " " << m->name;
             //     std::cout << "/TR:" << m->_in_transit_stack.size();
@@ -306,6 +312,8 @@ int main(int argc, char *argv[]) {
                 std::cout << "/Iron:" << m->getAmount(Resource::IronIngot);
                 std::cout << "/Rods:" << m->getAmount(Resource::IronRod);
                 std::cout << "/Screw:" << m->getAmount(Resource::Screw);
+                std::cout << "/Plates:" << m->getAmount(Resource::IronPlate);
+                std::cout << "/RePlates:" << m->getAmount(Resource::ReinforcedIronPlate);
                 // std::cout << "/Cop:" << m->getAmount(Resource::CopperOre);
                 std::cout << std::endl;
             }

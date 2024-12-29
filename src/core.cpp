@@ -2,30 +2,31 @@
 
 using namespace Fac;
 
-static int _calculate_rpm(std::optional<int> const processing_time, std::optional<int> const amount) {
+static int _calculate_ppm(std::optional<int> const processing_time, std::optional<int> const amount) {
     auto const rpm = processing_time.value_or(0) * amount.value_or(0);
     return rpm == 0 ? 0 : (60 / processing_time.value_or(0)) * amount.value_or(0);
 }
 
 void Machine::setRecipe(std::optional<Recipe> const &r) {
-    // if (r->inputs.size() > fixed_input_slots + 1) {
-    //     throw std::runtime_error("This machine only has one input slot");
-    // }
-    if (r->products.size() > fixed_output_slots + 1) {
-        throw std::runtime_error("This machine only has one output slot");
+    if (r->inputs.size() > _input_slots || r->products.size() > _output_slots) {
+        throw std::runtime_error("Recipe does not fit in this machine");
     }
+    
     _active_recipe = r;
-    auto const stack_in = getInputStack(1);
-    auto const stack_out = getOutputStack(0);
 
-    if (stack_in == nullptr || stack_out == nullptr) {
-        return;
+    // Note: the order of inputs in the recipe determines the slot they are added to
+    for (int i = 0; i < r->inputs.size(); i++) {
+        auto const input_stack = getInputStack(i);
+        input_stack->clear();
+        input_stack->lockResource(r->inputs[i].resource);
     }
 
-    stack_in->clear();
-    stack_in->lockResource(r->inputs[fixed_input_slots].resource);
-    stack_out->clear();
-    stack_out->lockResource(r->products[fixed_output_slots].resource);
+    // Note: The order of products in the recipe determines the slot they are added to
+    for (int i = 0; i < r->products.size(); i++) {
+        auto const output_stack = getOutputStack(i);
+        output_stack->clear();
+        output_stack->lockResource(r->products[i].resource);
+    }
 }
 
 std::optional<Recipe> Machine::getRecipe() const {
@@ -33,19 +34,28 @@ std::optional<Recipe> Machine::getRecipe() const {
 }
 
 int Machine::getInputRpm() const {
+    auto ppm = 0.0;
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
-        return _calculate_rpm(r.processing_time_s, r.inputs[fixed_input_slots].amount);
+        for (int i = 0; i < r.inputs.size(); i++) {
+            ppm += _calculate_ppm(r.processing_time_s, r.inputs[i].amount);
+        }
+        ppm = ppm / r.inputs.size();
     }
-    return 0;
+    return ppm;
 }
 
+// TODO this is a copy of getInputRpm
 int Machine::getOutputRpm() const {
+    auto ppm = 0.0;
     if (_active_recipe.has_value()) {
         auto const r = _active_recipe.value();
-        return _calculate_rpm(r.processing_time_s, r.products[fixed_output_slots].amount);
+        for (int i = 0; i < r.products.size(); i++) {
+            ppm += _calculate_ppm(r.processing_time_s, r.products[i].amount);
+        }
+        ppm = ppm / r.products.size();
     }
-    return 0;
+    return ppm;
 }
 
 void Machine::update(double const dt) {
@@ -53,13 +63,14 @@ void Machine::update(double const dt) {
         return;
     }
 
-    auto const connected_input = getInputStack(0);
-    auto const interal_input_stack = getInputStack(1);
-    // move items from connected input to internal input stack
-    if (!connected_input->isEmpty() && interal_input_stack->canAdd(1, connected_input->getResource())) {
-        interal_input_stack->addOne(connected_input->getResource());
-        connected_input->removeOne();
-    }
+    std::ranges::for_each(_input_connections, [](auto &c) {
+        auto const input = c.getInputStack(0);
+        auto const buffer = c.getOutputStack(0);
+        while (!input->isEmpty() && buffer->canAdd(1, input->getResource())) {
+            buffer->addOne(input->getResource());
+            input->removeOne();
+        }
+    });
 
     if (processing) {
         processing_progress += dt;
@@ -70,18 +81,22 @@ void Machine::update(double const dt) {
     if (processing_progress >= processing_time_s * 1000) {
         processing = false;
         processing_progress = 0.0;
-        if (getOutputStack(0)->getAmount() == MAX_STACK_SIZE) {
-            // TODO what to do when output stack is full?
-            // Idea: keep in a processing and add to output stack when it becomes available
-        } else {
-            getOutputStack(0)->addAmount(products[fixed_output_slots].amount,
-                                         products[fixed_output_slots].resource);
+        for (int i = 0; i < products.size(); i++) {
+            if (auto const stack = getOutputStack(i); stack->isFull()) {
+                // TODO what to do when output stack is full?
+                // Idea: keep in a processing and add to output stack when it becomes available
+            } else {
+                stack->addAmount(products[i].amount, products[i].resource);
+            }
+
         }
         return;
     }
 
     if (!processing && canStartProduction()) {
-        getInputStack(1)->removeAmount(inputs[fixed_input_slots].amount);
+        for (int i = 0; i < inputs.size(); i++) {
+            getInputStack(i)->removeAmount(inputs[i].amount);
+        }
         processing_progress = 0.0;
         processing = true;
         return;
@@ -100,14 +115,15 @@ bool Machine::canStartProduction() const {
     if (r.processing_time_s == 0)
         return false;
 
-    if (!getInputStack(0) || !getInputStack(1) || !getOutputStack(0))
-        return false;
+    for (int i = 0; i < r.inputs.size(); i++) {
+        if (getInputStack(i)->getAmount() < r.inputs[i].amount)
+            return false;
+    }
 
-    if (getInputStack(1)->getAmount() < r.inputs[fixed_input_slots].amount)
-        return false;
-
-    if (!getOutputStack(0)->canAdd(r.products[fixed_output_slots].amount, r.products[fixed_output_slots].resource))
-        return false;
+    for (int i = 0; i < r.products.size(); i++) {
+        if (!getOutputStack(i)->canAdd(r.products[i].amount, r.products[i].resource))
+            return false;
+    }
 
     if (getOutputStack(0)->isFull())
         return false;

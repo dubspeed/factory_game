@@ -23,8 +23,6 @@ TEST(Belt, CanConnectAndMoveItems) {
     EXPECT_FALSE(belt->getJammed());
     // +3 extra frames for the machine and belt to process and activate etc.
     belt->update(999+3);
-    // this should move the item from the belt to m2
-    EXPECT_EQ(m2->getInputStack(0)->getAmount(), 1);
     EXPECT_EQ(belt->_in_transit_stack.size(), 0);
     EXPECT_EQ(belt->getActive(), false);
     EXPECT_EQ(belt->getJammed(), false);

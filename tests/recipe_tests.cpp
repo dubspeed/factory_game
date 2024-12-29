@@ -16,9 +16,8 @@ TEST(RecipeTests, Recipe) {
 }
 
 TEST(RecipeTests, InAMachine) {
-    auto r = recipe_IronIngot;
     auto m = Machine();
-    m.setRecipe(r);
+    m.setRecipe(recipe_IronIngot);
     EXPECT_EQ(m.getOutputRpm(), 30);
     EXPECT_EQ(m.getInputRpm(), 30);
 }
@@ -34,17 +33,17 @@ TEST(RecipeTests, SimpleProductionCheckWithTime) {
     };
     w.addEntity(m);
     m->setRecipe(r);
-    m->getInput()->addAmount(5, r.inputs[0].resource);;
+    m->getFirstInput()->addAmount(5, r.inputs[0].resource);;
     for (auto i = 0; i < 4; i++) {
         w.update(999);
         EXPECT_EQ(m->processing, true);
-        EXPECT_TRUE(m->getInput()->isEmpty());
+        EXPECT_TRUE(m->getFirstInput()->isEmpty());
         EXPECT_TRUE(m->getOutputStack(0)->isEmpty());
         EXPECT_EQ(m->processing_progress, 999 * i);
     }
     w.update(1010);
     EXPECT_EQ(m->processing, false);
-    EXPECT_TRUE(m->getInput()->isEmpty());
+    EXPECT_TRUE(m->getFirstInput()->isEmpty());
     EXPECT_EQ(m->getOutputStack(0)->getAmount(), 1);
     EXPECT_EQ(m->processing_progress, 0);
 }
@@ -67,11 +66,11 @@ TEST(RecipeTests, LetsPassTime) {
     m->setRecipe(r);
 
     // add some raw material
-    m->getInput()->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
+    m->getFirstInput()->addAmount(MAX_STACK_SIZE, r.inputs[0].resource);;
 
     auto const time = r.processing_time_s * 1000;
 
-    auto in = m->getInput();
+    auto in = m->getFirstInput();
     // move time to the future, by iterating via delta_t
     // the +10 everywhere are just to make sure we are not missing any
     // stuff by adding some extra frame for processing

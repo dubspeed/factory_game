@@ -82,12 +82,14 @@ namespace Fac {
         }
 
         int getAmount() const { return _amount; }
+
         Resource getResource() const {
             if (!resource.has_value()) {
                 return Resource::None;
             }
             return resource.value();
         }
+
         void lockResource(Resource const &r) { resource = r; }
 
         bool removeAmount(int const amount) {
@@ -164,7 +166,7 @@ namespace Fac {
         std::vector<std::shared_ptr<Stack> > _output_stacks;
 
     public:
-        explicit OutputStackProvider(int nr_of_outputs) {
+        explicit OutputStackProvider(int const nr_of_outputs) {
             _output_stacks.resize(nr_of_outputs);
             for (int i = 0; i < nr_of_outputs; i++) {
                 _output_stacks[i] = std::make_shared<Stack>();
@@ -202,14 +204,14 @@ namespace Fac {
             }
         }
 
-        [[nodiscard]] std::shared_ptr<Stack> getStack(int slot) const override {
+        [[nodiscard]] std::shared_ptr<Stack> getStack(int const slot) const override {
             return getInputStack(slot);
         }
 
         // if the connection has a link, it returns the linked OutputStack, otherwise it returns the cached stack
-        [[nodiscard]] std::shared_ptr<Stack> getInputStack(int slot) const override {
+        [[nodiscard]] std::shared_ptr<Stack> getInputStack(int const slot) const override {
             const auto &connection = _input_connections.at(slot);
-            if (auto source = connection.source.lock()) {
+            if (auto const source = connection.source.lock()) {
                 return source->getOutputStack(connection.sourceOutputSlot);
             }
             return connection.cachedStack;
@@ -242,8 +244,17 @@ namespace Fac {
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(InputStackProvider, _input_connections)
     };
 
+    // features an internal stack as a buffer
+    // so it can link to a belt and provide a larger stack as outputConnection
+    class BufferedConnection final : public InputStackProvider, public OutputStackProvider {
+    public:
+        explicit BufferedConnection(): InputStackProvider(1), OutputStackProvider(1) {
+            _output_stacks[0]->setMaxStackSize(MAX_STACK_SIZE);
+        }
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(BufferedConnection, _input_connections, _output_stacks)
+    };
 
-    class ResourceNode : public GameWorldEntity {
+    class ResourceNode final: public GameWorldEntity {
         friend void from_json(const json &j, ResourceNode &r);;
 
     public:
@@ -278,7 +289,7 @@ namespace Fac {
 
 
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
-    class Extractor : public GameWorldEntity, public OutputStackProvider, public IInputLink {
+    class Extractor final: public GameWorldEntity, public OutputStackProvider, public IInputLink {
         friend void to_json(json &j, const Extractor &r);
 
         friend void from_json(const json &j, Extractor &r);
@@ -343,20 +354,25 @@ namespace Fac {
     * Machine
     * -------------
     */
-    class Machine : public GameWorldEntity, public InputStackProvider, public OutputStackProvider {
+    class Machine: public GameWorldEntity, public IInputProvider, public OutputStackProvider {
         friend void from_json(const json &, Machine &);
 
+        friend void to_json(json &j, const Machine &r);
+
     public:
-        static constexpr int fixed_input_slots = 0; // TODO allow multiple input slots for bigger machines
-        static constexpr int fixed_output_slots = 0; // TODO allow multiple input slots for bigger machines
+        std::vector<BufferedConnection> _input_connections;
+
         double processing_progress = 0.0;
         bool processing = false;
 
-        Machine(): InputStackProvider(2), OutputStackProvider(1) {
-            // input stack 0 will be the connection to the belt
-            // input stack 1 is the internal buffer
-            InputStackProvider::getInputStack(1)->setMaxStackSize(MAX_STACK_SIZE);
-        };
+        explicit Machine(int const input_slots = 1, int const output_slots = 1): OutputStackProvider(output_slots) {
+            _output_slots = output_slots;
+            _input_slots = input_slots;
+            _input_connections.resize(input_slots);
+            for (int i = 0; i < _output_slots; i++) {
+                _output_stacks[i]->setMaxStackSize(MAX_STACK_SIZE);
+            }
+        }
 
         void setRecipe(std::optional<Recipe> const &r);
 
@@ -372,15 +388,36 @@ namespace Fac {
 
         bool canStartProduction() const;
 
-        // TODO: better API needed here, since we can't have multiple input slots on this machine
-        // TODO: and input slot 0 is actually the belt connection
-        std::shared_ptr<Stack> getInput() const {
-            return InputStackProvider::getInputStack(1);
+        [[nodiscard]] std::shared_ptr<Stack> getStack(int const slot) const override {
+            return getInputStack(slot);
+        }
+
+        // implement getInputStack, getOutputStack
+        [[nodiscard]] std::shared_ptr<Stack> getInputStack(int const slot) const override {
+            return _input_connections.at(slot).getOutputStack(0);
+        }
+
+        void connectInput(int const inputSlot,
+                          std::shared_ptr<GameWorldEntity> sourceEntity,
+                          int sourceOutputSlot) override {
+            auto &connection = _input_connections.at(inputSlot);
+            connection.connectInput(0, sourceEntity, sourceOutputSlot);
+        }
+
+        // // TODO better API needed here
+        [[nodiscard]] std::shared_ptr<Stack> getFirstInput() const {
+            return getInputStack(0);
+        }
+
+        [[nodiscard]] std::shared_ptr<Stack> getSecondInput() const {
+            return getInputStack(1);
         }
 
     private:
         int _id = generate_id();
         std::optional<Recipe> _active_recipe;
+        int _input_slots = 0;
+        int _output_slots = 0;
     };
 
 

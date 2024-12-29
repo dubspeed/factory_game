@@ -41,7 +41,7 @@ TEST(JSON, Machine) {
     m.getInputStack(0)->addAmount(10, Resource::IronOre);
     m.getOutputStack(0)->addAmount(33, Resource::IronIngot);
     json j = m;
-    // std::cout << j.dump(4) << std::endl;
+    std::cout << j.dump(4) << std::endl;
     auto const m2 = j.get<Machine>();
     EXPECT_EQ(m2.getOutputRpm(), 15);
     EXPECT_EQ(m2.getInputRpm(), 75);

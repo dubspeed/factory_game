@@ -13,7 +13,8 @@ namespace Fac {
     class GameWorldEntity;
     class InputStackProvider;
     class OutputStackProvider;
-    class InputConnection;
+    struct InputConnection;
+    struct Stack;
     class Extractor;
     class ResourceNode;
     class Belt;
@@ -44,6 +45,7 @@ namespace nlohmann {
     };
 
     template<typename T>
+    requires std::derived_from<T, Fac::Stack>
     struct adl_serializer<std::vector<std::shared_ptr<T> > > {
         static void to_json(json &j, const std::vector<std::shared_ptr<T> > &stacks) {
             j = json::array();
@@ -54,6 +56,7 @@ namespace nlohmann {
         }
 
         static void from_json(const json &j, std::vector<std::shared_ptr<T> > &stacks) {
+            stacks.clear();
             for (const auto &stack: j) {
                 stacks.push_back(std::make_shared<T>(stack.get<T>()));
             }

@@ -30,7 +30,8 @@
 	    "AutomatedWiring",
 	    "SteelBeam",
 	    "EncasedIndustrialBeam",
-	    "Motor"
+	    "Motor",
+	    "Coal"
     ]
 }
 

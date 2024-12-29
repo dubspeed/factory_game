@@ -32,6 +32,7 @@ enum class Resource {
 	SteelBeam,
 	EncasedIndustrialBeam,
 	Motor,
+	Coal,
 };
 } // Fac
 #endif //RESOURCES_H
