@@ -44,6 +44,7 @@ add_executable(
         reconnect_links_tests.cpp
         ../src/serialization.h
         extractor_tests.cpp
+        removal_tests.cpp
 )
 
 target_compile_definitions(factory_tests PRIVATE TESTING)

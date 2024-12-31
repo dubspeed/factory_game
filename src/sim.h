@@ -2,7 +2,7 @@
 #define SIM_H
 
 #include <functional>
-#include <utility>
+#include <memory>
 #include "core.h"
 #include "storage.h"
 
@@ -34,8 +34,8 @@ namespace Fac {
     public:
         Factory() = default;
 
-        [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity>> getEntities() const {
-            std::vector<std::shared_ptr<GameWorldEntity>> result;
+        [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity> > getEntities() const {
+            std::vector<std::shared_ptr<GameWorldEntity> > result;
             result.reserve(_entities.size());
             for (const auto &val: _entity_map | std::views::values) {
                 result.push_back(val);
@@ -43,9 +43,9 @@ namespace Fac {
             return result;
         }
 
-        // return the casted entity by id
-        [[nodiscard]] std::shared_ptr<GameWorldEntity> getEntityById(int id) const {
-            return _entity_map.at(id);
+        // return the cast entity by id
+        [[nodiscard]] std::optional<std::shared_ptr<GameWorldEntity>> getEntityById(int const id) const {
+            return _entity_map.contains(id) ? std::make_optional(_entity_map.at(id)) : std::nullopt;
         }
 
         // templates need to be available at compile time, not just at link time, so
@@ -54,39 +54,26 @@ namespace Fac {
             requires std::derived_from<T, GameWorldEntity>
         void addEntity(std::shared_ptr<T> const &entity) {
             _entity_map[entity->getId()] = entity;
-            if (auto belt = std::dynamic_pointer_cast<Belt>(entity)) {
-                _entities.push_back(belt);
-            } else if (auto stack = std::dynamic_pointer_cast<Stack>(entity)) {
-                _entities.push_back(stack);
-            } else if (auto machine = std::dynamic_pointer_cast<Machine>(entity)) {
-                _entities.push_back(machine);
-            } else if (auto extr = std::dynamic_pointer_cast<Extractor>(entity)) {
-                _entities.push_back(extr);
-            } else if (auto node = std::dynamic_pointer_cast<ResourceNode>(entity)) {
-                _entities.push_back(node);
-            } else if (auto merger = std::dynamic_pointer_cast<Merger>(entity)) {
-                _entities.push_back(merger);
-            } else if (auto splitter = std::dynamic_pointer_cast<Splitter>(entity)) {
-                _entities.push_back(splitter);
-            } else if (auto storage = std::dynamic_pointer_cast<Storage>(entity)) {
-                _entities.push_back(storage);
-            } else {
-                throw std::runtime_error("GameWorld/AddEntity: Can't add unsupported entity type");
-            }
+            _entities.push_back(entity);
         }
 
-        // TODO remove does not seem to work with the variant style
         template<typename T>
             requires std::derived_from<T, GameWorldEntity>
         bool removeEntity(std::shared_ptr<T> const &entity) {
             if (_entities.empty()) {
                 return false;
             }
-            if (std::find(_entities.begin(), _entities.end(), entity) == _entities.end()) {
-                return false;
-            }
-            std::erase(_entities, entity);
+
+            _entities.erase(std::remove_if(_entities.begin(), _entities.end(), [&entity](auto const &e) {
+                const std::shared_ptr<GameWorldEntity> basePtr = std::visit(
+                    [](const auto &ptr) -> std::shared_ptr<GameWorldEntity> {
+                        return ptr; // Implicit upcast to base class pointer
+                    }, e);
+                return basePtr->getId() == entity->getId();
+            }), _entities.end());
+
             _entity_map.erase(entity->getId());
+
             return true;
         }
 
@@ -101,7 +88,7 @@ namespace Fac {
 
         void processWorldStep() const;
 
-        void registerObserver(int id, std::function<void(std::shared_ptr<GameWorldEntity>)> const &callback) {
+        void registerObserver(int const id, std::function<void(std::shared_ptr<GameWorldEntity>)> const &callback) {
             _observers.push_back({id, callback});
         }
 

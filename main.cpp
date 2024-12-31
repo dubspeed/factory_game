@@ -16,7 +16,6 @@ auto fac = Factory();
 char *save_file;
 
 
-
 void saveWorld(Factory &w) {
     std::cout << "Saving world\n";
     std::ofstream current_save_file = std::ofstream(save_file);;
@@ -65,7 +64,7 @@ void signal_handler(int signal) {
 typedef std::pair<const std::shared_ptr<GameWorldEntity>, int> Connection;
 
 template<typename T>
-requires std::derived_from<T, GameWorldEntity>
+    requires std::derived_from<T, GameWorldEntity>
 auto create(Factory &w, T const &entity) {
     auto e = std::make_shared<T>(entity);
     w.addEntity(e);
@@ -233,7 +232,6 @@ int main(int argc, char *argv[]) {
         fac = j.get<Factory>();
         std::cout << "Loaded world from file\n";
         i.close();
-
     } else {
         // setupGameWorldSimple(fac);
         setupGameWorldComplex(fac);
@@ -262,10 +260,10 @@ int main(int argc, char *argv[]) {
         for (auto &entity: fac.getEntities()) {
             if (auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
                 std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;
-                for (int i=0; i < m->getInputSlots(); i++) {
+                for (int i = 0; i < m->getInputSlots(); i++) {
                     std::cout << "/I" << i << ":" << m->getInputStack(i)->getAmount();
                 }
-                for (int i=0; i < m->getOutputSlots(); i++) {
+                for (int i = 0; i < m->getOutputSlots(); i++) {
                     std::cout << "/O" << i << ":" << m->getOutputStack(i)->getAmount();
                 }
                 std::cout << "/P:" << m->processing;
@@ -321,9 +319,24 @@ int main(int argc, char *argv[]) {
                 std::cout << std::endl;
             }
         }
+
+        // test deletion of things, by deleting something random every second or so (it the doubles match up)
+        int count = static_cast<int>(elapsed.count() * 1000.0);
+        if (count % 1000 == 0) {
+            // if (elapsed.count() == 10 || elapsed.count() == 20 || elapsed.count() == 30) {
+            if (fac.getEntities().size() > 0) {
+                auto random_entity = fac.getEntities()[rand() % fac.getEntities().size()];
+
+                fac.removeEntity(random_entity);
+            }
+        }
+
+        if (count > 10000) {
+            saveWorld(fac);
+            break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
 
     return 0;
 }

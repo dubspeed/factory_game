@@ -58,7 +58,8 @@ namespace Fac {
     public:
         virtual ~IInputLink() = default;
 
-        virtual void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) = 0;
+        virtual void reconnectLinks(
+            std::function<std::optional<std::shared_ptr<GameWorldEntity> >(int)> const &getEntityById) = 0;
     };
 
     struct Stack final : GameWorldEntity {
@@ -139,8 +140,6 @@ namespace Fac {
     class IStackAccessor {
     public:
         virtual ~IStackAccessor() = default;
-
-        [[nodiscard]] virtual std::shared_ptr<Stack> getStack(int slot) const = 0;
     };
 
     // Specific interface for output-capable components
@@ -173,10 +172,6 @@ namespace Fac {
             }
         }
 
-        [[nodiscard]] std::shared_ptr<Stack> getStack(int const slot) const override {
-            return getOutputStack(slot);
-        }
-
         [[nodiscard]] std::shared_ptr<Stack> getOutputStack(int const slot) const override {
             return _output_stacks.at(slot);
         }
@@ -189,6 +184,22 @@ namespace Fac {
         int sourceId = 0;
         int sourceOutputSlot = 0;
         std::shared_ptr<Stack> cachedStack;
+
+        void clear() {
+            source.reset();
+            sourceId = 0;
+            sourceOutputSlot = 0;
+            cachedStack = nullptr;
+        }
+
+        void resetToCachedStack() {
+            clear();
+            cachedStack = std::make_shared<Stack>();
+        }
+
+        bool isBrokenLink() const {
+            return source.lock() == nullptr && sourceId != 0;
+        }
     };
 
 
@@ -204,15 +215,18 @@ namespace Fac {
             }
         }
 
-        [[nodiscard]] std::shared_ptr<Stack> getStack(int const slot) const override {
-            return getInputStack(slot);
-        }
-
         // if the connection has a link, it returns the linked OutputStack, otherwise it returns the cached stack
         [[nodiscard]] std::shared_ptr<Stack> getInputStack(int const slot) const override {
-            const auto &connection = _input_connections.at(slot);
+            auto connection = _input_connections.at(slot);
             if (auto const source = connection.source.lock()) {
                 return source->getOutputStack(connection.sourceOutputSlot);
+            }
+
+            // if the connection has no link, return the cached stack
+            // however, the link might be broken / gone, so we need create a cached stack
+            // on the fly if needed
+            if (connection.isBrokenLink()) {
+                connection.resetToCachedStack();
             }
             return connection.cachedStack;
         }
@@ -231,11 +245,13 @@ namespace Fac {
             connection.cachedStack = nullptr;
         }
 
-        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
+        void reconnectLinks(
+            std::function<std::optional<std::shared_ptr<GameWorldEntity> >(int)> const &getEntityById) override {
             for (int inputSlot = 0; inputSlot < _input_connections.size(); inputSlot++) {
                 auto const &connection = _input_connections.at(inputSlot);
-                if (connection.cachedStack == nullptr && connection.sourceId != 0) {
-                    connectInput(inputSlot, getEntityById(connection.sourceId), connection.sourceOutputSlot);
+                auto const node = getEntityById(connection.sourceId);
+                if (connection.cachedStack == nullptr && connection.sourceId != 0 && node.has_value()) {
+                    connectInput(inputSlot, node.value(), connection.sourceOutputSlot);
                     // std::cout << "Reconnected input " << inputSlot << " to " << connection.sourceId << std::endl;
                 }
             }
@@ -251,10 +267,11 @@ namespace Fac {
         explicit BufferedConnection(): InputStackProvider(1), OutputStackProvider(1) {
             _output_stacks[0]->setMaxStackSize(MAX_STACK_SIZE);
         }
+
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(BufferedConnection, _input_connections, _output_stacks)
     };
 
-    class ResourceNode final: public GameWorldEntity {
+    class ResourceNode final : public GameWorldEntity {
         friend void from_json(const json &j, ResourceNode &r);;
 
     public:
@@ -289,7 +306,7 @@ namespace Fac {
 
 
     // Resource extractions speeds are 30 / 60 / 120 for impure, normal, pure
-    class Extractor final: public GameWorldEntity, public OutputStackProvider, public IInputLink {
+    class Extractor final : public GameWorldEntity, public OutputStackProvider, public IInputLink {
         friend void to_json(json &j, const Extractor &r);
 
         friend void from_json(const json &j, Extractor &r);
@@ -324,9 +341,12 @@ namespace Fac {
 
         int getId() const override { return _id; }
 
-        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
-            if (_res_node_id > -1)
-                setResourceNode(std::dynamic_pointer_cast<ResourceNode>(getEntityById(_res_node_id)));
+        void reconnectLinks(
+            std::function<std::optional<std::shared_ptr<GameWorldEntity> >(int)> const &getEntityById) override {
+            if (_res_node_id > -1) {
+                if (auto const node = getEntityById(_res_node_id); node.has_value())
+                    setResourceNode(std::dynamic_pointer_cast<ResourceNode>(node.value()));
+            }
         }
 
         float getOutputRpm() const {
@@ -354,13 +374,12 @@ namespace Fac {
     * Machine
     * -------------
     */
-    class Machine: public GameWorldEntity, public IInputProvider, public IInputLink, public OutputStackProvider {
+    class Machine final : public GameWorldEntity, public IInputProvider, public IInputLink, public OutputStackProvider {
         friend void from_json(const json &, Machine &);
 
         friend void to_json(json &j, const Machine &r);
 
     public:
-
         double processing_progress = 0.0;
         bool processing = false;
 
@@ -387,10 +406,6 @@ namespace Fac {
 
         bool canStartProduction() const;
 
-        [[nodiscard]] std::shared_ptr<Stack> getStack(int const slot) const override {
-            return getInputStack(slot);
-        }
-
         // implement getInputStack, getOutputStack
         [[nodiscard]] std::shared_ptr<Stack> getInputStack(int const slot) const override {
             return _input_connections.at(slot).getOutputStack(0);
@@ -403,7 +418,8 @@ namespace Fac {
             connection.connectInput(0, sourceEntity, sourceOutputSlot);
         }
 
-        void reconnectLinks(std::function<std::shared_ptr<GameWorldEntity>(int)> const &getEntityById) override {
+        void reconnectLinks(
+            std::function<std::optional<std::shared_ptr<GameWorldEntity> >(int)> const &getEntityById) override {
             for (auto &connection: _input_connections) {
                 connection.reconnectLinks(getEntityById);
             }

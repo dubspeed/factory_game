@@ -104,7 +104,7 @@ TEST(JSON, GameWorld) {
     w.addEntity(m);
     w.addEntity(b);
     json j = w;
-    std::cout << j.dump(4) << std::endl;
+    // std::cout << j.dump(4) << std::endl;
     w.clearWorld();
     auto w2 = j.get<Factory>();
     EXPECT_EQ(w2.getEntities().size(), 2);

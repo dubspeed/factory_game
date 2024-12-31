@@ -29,7 +29,12 @@ void Fac::from_json(const json &j, Machine &r) {
 
 void Fac::to_json(json &j, const InputConnection &r) {
     if (r.source.lock() == nullptr) {
-        j = json{{"stack", *r.cachedStack}};
+        if (r.isBrokenLink()) {
+            // in case of a broken link situation, save an empty stack
+            j = json{{"stack", *std::make_shared<Stack>()}};
+        } else {
+            j = json{{"stack", *r.cachedStack}};
+        }
     } else {
         j = json{{"linkedSourceMachineId", r.sourceId}, {"linkedSourceMachineOutputSlot", r.sourceOutputSlot}};
     }
@@ -62,7 +67,7 @@ void Fac::from_json(const json &j, ResourceNode &r) {
 void Fac::to_json(json &j, const Extractor &r) {
     auto m = json{
         {"id", r.getId()}, {"extractionProgress", r.extraction_progress}, {"extracting", r.extracting},
-        {"resNodeId", r._res_node_id}, {"name", r.name}, { "defaultExtractionSpeed", r._default_extraction_speed }
+        {"resNodeId", r._res_node_id}, {"name", r.name}, {"defaultExtractionSpeed", r._default_extraction_speed}
     };
     m["output"] = (OutputStackProvider) r;
     j["resourceExtractor"] = m;
@@ -267,7 +272,7 @@ void Fac::from_json(const json &j, Factory &r) {
         }
     }
 
-    auto fn = [r](const int id) {
+    auto fn = [r](const int id) -> std::optional<std::shared_ptr<GameWorldEntity> > {
         return r.getEntityById(id);
     };
 

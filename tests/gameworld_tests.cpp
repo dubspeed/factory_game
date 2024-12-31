@@ -10,5 +10,5 @@ TEST(GameWorld, GetEntityById) {
     const auto m = std::make_shared<Machine>(Machine());
     w.addEntity(m);
     auto id = m->getId();
-    EXPECT_EQ(w.getEntityById(id)->getId(), id);
+    EXPECT_EQ(w.getEntityById(id).value()->getId(), id);
 }

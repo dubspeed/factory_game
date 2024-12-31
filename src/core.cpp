@@ -198,8 +198,8 @@ void Splitter::update(double dt) {
         if (_time_to_next_transfer >= 1000 / _items_per_s) {
             _time_to_next_transfer = 0.0;
 
-            auto can_add_to_first = getOutputStack(0)->canAdd(1, _in_transit_stack[0]);
-            auto can_add_to_second = getOutputStack(1)->canAdd(1, _in_transit_stack[0]);
+            auto const can_add_to_first = getOutputStack(0)->canAdd(1, _in_transit_stack[0]);
+            auto const can_add_to_second = getOutputStack(1)->canAdd(1, _in_transit_stack[0]);
 
             if (split_to_first_output) {
                 if (can_add_to_first) {
