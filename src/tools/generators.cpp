@@ -17,6 +17,8 @@ using namespace Fac;
 "CopperOre",
 "CopperIngot",
 ] }
+* The output will be a C++ header file with an enum class Resource
+* includes a function to convert the enum to a string
 * @param json_file_path path to the JSON file
 * @param output_file_path path to the output C header file
 */
@@ -38,12 +40,22 @@ void generate_resources_header_file(const std::string &json_file_path, const std
     std::ofstream out(output_file_path);
     out << "#ifndef RESOURCES_H\n";
     out << "#define RESOURCES_H\n\n";
+    out << "#include <string_view>\n";
     out << "namespace Fac {\n";
     out << "enum class Resource {\n";
     for (const auto &resource: j["enum"]) {
         out << "\t" << resource.get<std::string>() << ",\n";
     }
     out << "};\n";
+    out << "constexpr std::string_view resourceToString(Resource const r) {\n";
+    out << "\tswitch (r) {\n";
+    for (const auto &resource: j["enum"]) {
+        out << "\t\tcase Resource::" << resource.get<std::string>() << ":\n";
+        out << "\t\t\treturn \"" << resource.get<std::string>() << "\";\n";
+    }
+    out << "\t}\n";
+    out << "\treturn \"None\";\n";
+    out << "}\n";
     out << "} // Fac\n";
     out << "#endif //RESOURCES_H\n";
 }

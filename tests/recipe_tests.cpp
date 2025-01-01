@@ -77,7 +77,7 @@ TEST(RecipeTests, LetsPassTime) {
     for (auto i = 0; i <= time * 3 + 10; i++) {
         w.update(1);
         if (i + 10 % time + 10 == 0) {
-            std::cout << "Time: " << i << std::endl;
+            // std::cout << "Time: " << i << std::endl;
             if (i > 0)
                 EXPECT_EQ(in->getAmount(), MAX_STACK_SIZE - r.inputs[0].amount * (i / time));
             if (i == time + 10)

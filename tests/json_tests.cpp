@@ -27,7 +27,7 @@ TEST(JSON, RecipeTest) {
     EXPECT_EQ(r2.processing_time_s, 4);
     EXPECT_EQ(r2.inputs[0].resource, Resource::IronOre);
     EXPECT_EQ(r2.products[0].resource, Resource::IronIngot);
-    std::cout << j.dump(4) << std::endl;
+    // std::cout << j.dump(4) << std::endl;
 }
 
 TEST(JSON, Machine) {
@@ -41,7 +41,7 @@ TEST(JSON, Machine) {
     m.getInputStack(0)->addAmount(10, Resource::IronOre);
     m.getOutputStack(0)->addAmount(33, Resource::IronIngot);
     json j = m;
-    std::cout << j.dump(4) << std::endl;
+    // std::cout << j.dump(4) << std::endl;
     auto const m2 = j.get<Machine>();
     EXPECT_EQ(m2.getOutputRpm(), 15);
     EXPECT_EQ(m2.getInputRpm(), 75);
@@ -73,7 +73,7 @@ TEST(JSON, LinkedStacks) {
     json j;
     j["machines"] = *m;
     j["belts"] = *b;
-    std::cout << j.dump(4) << std::endl;
+    // std::cout << j.dump(4) << std::endl;
 
     auto m2 = std::make_shared<Machine>(j["machines"].get<Machine>());
     auto b2 = std::make_shared<Belt>(j["belts"].get<Belt>());

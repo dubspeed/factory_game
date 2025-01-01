@@ -20,10 +20,6 @@ void Factory::advanceBy(double const dt, std::function<void()> const &callback) 
     callback();
 }
 
-void logTimeStep(double const deltaTime) {
-    std::cout << "DT:" << deltaTime << " ms" << std::endl;
-}
-
 void Factory::processWorldStep() const {
     using Clock = std::chrono::steady_clock;
     using TimePoint = std::chrono::time_point<Clock>;
@@ -35,7 +31,6 @@ void Factory::processWorldStep() const {
     const double deltaTime = elapsed.count() * 1000;
 
     update(deltaTime);
-    logTimeStep(deltaTime);
     previousTime = currentTime;
 
     // Notify observers
