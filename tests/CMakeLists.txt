@@ -56,6 +56,7 @@ add_executable(
         ../src/serialization.h
         extractor_tests.cpp
         removal_tests.cpp
+        ../src/game/game.h
 )
 
 target_compile_definitions(factory_tests PRIVATE TESTING)

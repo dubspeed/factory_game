@@ -92,7 +92,10 @@ namespace Fac {
             _observers.push_back({id, callback});
         }
 
+        int getId() const { return id; }
+
     private:
+        int id = generate_id();
         GameWorldEntities _entities;
         std::vector<EntityObserver> _observers;
         std::map<int, std::shared_ptr<GameWorldEntity> > _entity_map;

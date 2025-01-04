@@ -1,6 +1,7 @@
 #include <iostream>
 #include "src/factory.h"
 #include "src/tools/generators.h"
+#include "src/game/game.h"
 #include <csignal>
 #include <thread>
 #include <unistd.h>
@@ -11,215 +12,41 @@
 #include <stdio.h>
 #include <SDL3/SDL.h>
 #include <string>
-
-
+#include "src/tools/defer.h"
 #include "nlohmann/json.hpp"
+#include "src/dsl/examples.h"
 
 using namespace Fac;
 using json = nlohmann::json;
 
 volatile sig_atomic_t stop = 0;
-auto fac = Factory();
+auto gameState = GameState();
 char *save_file;
 
 SDL_Window *window;
 SDL_Renderer *renderer;
 
 
-void saveWorld(Factory &w) {
+void saveWorld() {
     std::cout << "Saving world\n";
-    std::ofstream current_save_file = std::ofstream(save_file);;
-    json j = w;
+    auto current_save_file = std::ofstream(save_file);;
     auto buffer = std::stringstream();
+
+    json j = gameState;
     buffer << j.dump(4);
-    current_save_file << j.dump(4);
+    std::cout << buffer.str() << std::endl;
+    current_save_file << buffer.str() << std::endl;
     current_save_file.flush();
     current_save_file.close();
     std::cout << "World saved\n";
 }
 
-void signal_handler(int signal) {
+void signal_handler(int const signal) {
     stop = 1;
     std::cout << "Signal received: " << signal << std::endl;
-    saveWorld(fac);
+    saveWorld();
 }
 
-
-#define LIT(x) #x
-#define CONNECTION(a, b) std::make_pair<std::shared_ptr<GameWorldEntity> const&, int>(a, b)
-#define FROM_SLOT0(a) CONNECTION(a, 0)
-#define FROM_SLOT1(a) CONNECTION(a, 1)
-#define TO_SLOT0(a) CONNECTION(a, 0)
-#define TO_SLOT1(a) CONNECTION(a, 1)
-#define LINK(from_output, to_input) linkWithBelt(from_output, to_input)
-#define LINK_T2(from_output, to_input) linkWithBelt(from_output, to_input, 120)
-#define LINK_T3(from_output, to_input) linkWithBelt(from_output, to_input, 270)
-#define LINK_T4(from_output, to_input) linkWithBelt(from_output, to_input, 480)
-#define LINK_T5(from_output, to_input) linkWithBelt(from_output, to_input, 780)
-#define LINK_T6(from_output, to_input) linkWithBelt(from_output, to_input, 1200)
-#define CREATE(id, type) auto const id = create(fac, type()) ; id->name = "" LIT(id)
-#define SMELTER(id, resource) CREATE(id, Machine); id->setRecipe(recipe_##resource)
-#define CRAFTER(id, recipe) CREATE(id, Machine); id->setRecipe(recipe_##recipe)
-#define ASSEMBLER(id, recipe) auto const id = create(fac, Machine(2, 1)) ; id->name = "" LIT(id) ; id->setRecipe(recipe_##recipe)
-
-// Merger ans Spliiter have no tier, so they operate at each frame
-#define SPLITTER(name) CREATE(name, Splitter) ; name->setItemsPerSecond(1000);
-#define MERGER(name) CREATE(name, Merger) ; name->setItemsPerSecond(1000);
-#define EXTRACTOR_T1(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(60)
-#define EXTRACTOR_T2(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(120)
-#define EXTRACTOR_T3(name, node) CREATE(name, Extractor); name->setResourceNode(node) ; name->setDefaultSpeed(240)
-#define RESOURCE_NODE(name, resource, quality) CREATE(name, ResourceNode) ; name->setResource(Resource::resource); name->setResourceQuality(ResourceQuality::quality)
-#define SMALL_STORAGE(name) CREATE(name, Storage) ; name->setMaxItemStacks(12)
-
-typedef std::pair<const std::shared_ptr<GameWorldEntity>, int> Connection;
-
-template<typename T>
-    requires std::derived_from<T, GameWorldEntity>
-auto create(Factory &w, T const &entity) {
-    auto e = std::make_shared<T>(entity);
-    w.addEntity(e);
-    return e;
-}
-
-void connectInput(Connection const &from_input, Connection const &to_output) {
-    const auto connector = std::dynamic_pointer_cast<IInputProvider>(from_input.first);
-    connector->connectInput(from_input.second, to_output.first, to_output.second);
-}
-
-void linkWithBelt(Connection const &from_output, Connection const &to_input, int const rpm = 60) {
-    CREATE(belt, Belt);
-    belt->setItemsPerSecond(rpm / 60.0);
-    connectInput(FROM_SLOT0(belt), from_output);
-    connectInput(to_input, TO_SLOT0(belt));
-}
-
-void setupGameWorldSimple(Factory &w) {
-    SMALL_STORAGE(plates);
-    SMALL_STORAGE(screws);
-
-    plates->manualAdd(100, Resource::IronPlate);
-    screws->manualAdd(100, Resource::Screw);
-
-    ASSEMBLER(reinforced_plate, ReinforcedIronPlate);
-
-    LINK(FROM_SLOT0(plates), TO_SLOT0(reinforced_plate));
-    LINK(FROM_SLOT0(screws), TO_SLOT1(reinforced_plate));
-
-    SMALL_STORAGE(reinforced_plates_storage);
-    LINK(FROM_SLOT0(reinforced_plate), TO_SLOT0(reinforced_plates_storage));
-
-    std::cout << "Setup complete\n";
-}
-
-
-void setupGameWorldComplex(Factory &w) {
-    RESOURCE_NODE(iron_node, IronOre, Normal);
-    EXTRACTOR_T1(iron_extractor, iron_node);
-
-    SPLITTER(sp1);
-    LINK(FROM_SLOT0(iron_extractor), TO_SLOT0(sp1));
-
-    // Goal is to make around 240 screws per minute
-    // We need 2 smelters, 4 rod crafters, and 6 screws crafters
-
-    CRAFTER(smelter1, IronIngot);
-    LINK(FROM_SLOT0(sp1), TO_SLOT0(smelter1));
-
-    CRAFTER(smelter2, IronIngot);
-    LINK(FROM_SLOT1(sp1), TO_SLOT0(smelter2));
-
-    MERGER(mg1);
-    LINK(FROM_SLOT0(smelter1), TO_SLOT0(mg1));
-    LINK(FROM_SLOT0(smelter2), TO_SLOT1(mg1));
-
-    // start IRON_ ROD production, 4 rod crafters
-
-    SPLITTER(sp4);
-    LINK(FROM_SLOT0(mg1), TO_SLOT0(sp4));
-    CRAFTER(rod1, IronRod);
-    LINK(FROM_SLOT0(sp4), TO_SLOT0(rod1));
-
-    SPLITTER(sp5);
-    LINK(FROM_SLOT1(sp4), TO_SLOT0(sp5));
-    CRAFTER(rod2, IronRod);
-    LINK(FROM_SLOT0(sp5), TO_SLOT0(rod2));
-
-    SPLITTER(sp6);
-    LINK(FROM_SLOT1(sp5), TO_SLOT0(sp6));
-    CRAFTER(rod3, IronRod);
-    LINK(FROM_SLOT0(sp6), TO_SLOT0(rod3));
-    CRAFTER(rod4, IronRod);
-    LINK(FROM_SLOT1(sp6), TO_SLOT0(rod4));
-
-    MERGER(mg3);
-    LINK(FROM_SLOT0(rod1), TO_SLOT0(mg3));
-    LINK(FROM_SLOT0(rod2), TO_SLOT1(mg3));
-
-    MERGER(mg4);
-    LINK(FROM_SLOT0(mg3), TO_SLOT0(mg4));
-    LINK(FROM_SLOT0(rod3), TO_SLOT1(mg4));
-
-    MERGER(mg5);
-    LINK(FROM_SLOT0(mg4), TO_SLOT0(mg5));
-    LINK(FROM_SLOT0(rod4), TO_SLOT1(mg5));
-
-    // ROD production complete
-
-    // SMALL_STORAGE(storage2);
-    // LINK(FROM_SLOT0(mg5), TO_SLOT0(storage2));
-
-    SPLITTER(screw_sp1);
-    LINK(FROM_SLOT0(mg5), TO_SLOT0(screw_sp1));
-
-    CRAFTER(screw1, Screw);
-    LINK(FROM_SLOT0(screw_sp1), TO_SLOT0(screw1));
-
-    SPLITTER(screw_sp2);
-    LINK(FROM_SLOT1(screw_sp1), TO_SLOT0(screw_sp2));
-
-    CRAFTER(screw2, Screw);
-    LINK(FROM_SLOT0(screw_sp2), TO_SLOT0(screw2));
-
-    SPLITTER(screw_sp3);
-    LINK(FROM_SLOT1(screw_sp2), TO_SLOT0(screw_sp3));
-
-    CRAFTER(screw3, Screw);
-    LINK(FROM_SLOT0(screw_sp3), TO_SLOT0(screw3));
-
-    SPLITTER(screw_sp4);
-    LINK(FROM_SLOT1(screw_sp3), TO_SLOT0(screw_sp4));
-
-    CRAFTER(screw4, Screw);
-    LINK(FROM_SLOT0(screw_sp4), TO_SLOT0(screw4));
-
-    SPLITTER(screw_sp5);
-    LINK(FROM_SLOT1(screw_sp4), TO_SLOT0(screw_sp5));
-
-    CRAFTER(screw5, Screw);
-    LINK(FROM_SLOT0(screw_sp5), TO_SLOT0(screw5));
-
-    SPLITTER(screw_sp6);
-    LINK(FROM_SLOT1(screw_sp5), TO_SLOT0(screw_sp6));
-
-    MERGER(screw_mg1);
-    LINK(FROM_SLOT0(screw1), TO_SLOT0(screw_mg1));
-    LINK(FROM_SLOT0(screw2), TO_SLOT1(screw_mg1));
-
-    MERGER(screw_mg2);
-    LINK_T3(FROM_SLOT0(screw_mg1), TO_SLOT0(screw_mg2));
-    LINK(FROM_SLOT0(screw3), TO_SLOT1(screw_mg2));
-
-    MERGER(screw_mg3);
-    LINK_T3(FROM_SLOT0(screw_mg2), TO_SLOT0(screw_mg3));
-    LINK(FROM_SLOT0(screw4), TO_SLOT1(screw_mg3));
-
-    MERGER(screw_mg4);
-    LINK_T3(FROM_SLOT0(screw_mg3), TO_SLOT0(screw_mg4));
-    LINK(FROM_SLOT0(screw5), TO_SLOT1(screw_mg4));
-
-    SMALL_STORAGE(storage3);
-    LINK_T3(FROM_SLOT0(screw_mg4), TO_SLOT0(storage3));
-}
 
 int setupImGui() {
     // Setup SDL
@@ -312,12 +139,14 @@ int main(int argc, char *argv[]) {
     if (std::ifstream i(save_file); i) {
         json j;
         i >> j;
-        fac = j.get<Factory>();
+        gameState = j.get<GameState>();
         std::cout << "Loaded world from file\n";
         i.close();
     } else {
-        // setupGameWorldSimple(fac);
-        setupGameWorldComplex(fac);
+        // setupGameWorldSimple();
+        gameState.factories.push_back(std::make_shared<Factory>());
+        // Examples::complexFactory(gameState.factories.front());
+        Examples::simpleFactory(gameState.factories.front());
         std::cout << "Created new world\n";
     }
 
@@ -331,9 +160,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    constexpr auto clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    // auto entities = w.getEntities();
+    auto gameWindowViewModel = GameWindowViewModel(gameState, gameState.factories.front());
+    auto gameWindow = GameWindow(gameWindowViewModel);
+
     while (!stop) {
         auto const currentTime = Clock::now();
         std::chrono::duration<double> const elapsed = currentTime - startTime;
@@ -357,7 +188,9 @@ int main(int argc, char *argv[]) {
         }
 
         // Factory logic
-        fac.processWorldStep();
+        for (const auto &factory : gameState.factories) {
+            factory->processWorldStep();
+        }
 
         // Start the Dear ImGui frame
         ImGui_ImplSDLRenderer3_NewFrame();
@@ -367,10 +200,11 @@ int main(int argc, char *argv[]) {
 
         ImGui::ShowDemoWindow();
 
+        gameWindow.render();
 
         auto showFactoryList = []() {
             if (ImGui::BeginTable("table1", 7)) {
-                for (auto &entity: fac.getEntities()) {
+                for (auto &entity: gameState.factories.front()->getEntities()) {
                     // if (auto gameEntity = std::dynamic_pointer_cast<GameWorldEntity>(entity)) {
                     //     ImGui::Text(std::format("Entity: {0} {1}", entity->getId(), entity->name).c_str());
                     //     ImGui::Separator();
@@ -513,6 +347,9 @@ int main(int argc, char *argv[]) {
         SDL_RenderClear(renderer);
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
         SDL_RenderPresent(renderer);
+
+        // This will execute all queued calls outside frame rendering
+        deferCall(nullptr);
     }
 
     // Cleanup
@@ -523,6 +360,8 @@ int main(int argc, char *argv[]) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    saveWorld();
 
     return 0;
 }

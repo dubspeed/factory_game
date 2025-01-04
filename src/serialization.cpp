@@ -16,7 +16,6 @@ void Fac::to_json(json &j, const Machine &r) {
 }
 
 void Fac::from_json(const json &j, Machine &r) {
-    r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
     r.processing = j.at("machine").at("processing").get<bool>();
     r.processing_progress = j.at("machine").at("progress").get<double>();
     r._id = j.at("machine").at("id").get<int>();
@@ -25,6 +24,7 @@ void Fac::from_json(const json &j, Machine &r) {
     r._input_connections = j.at("machine").at("input").get<std::vector<BufferedConnection> >();
     r._output_stacks = j.at("machine").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
     r.name = j.at("machine").at("name").get<std::string>();
+    r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
 }
 
 void Fac::to_json(json &j, const InputConnection &r) {
@@ -178,6 +178,7 @@ void Fac::from_json(const json &j, Storage &r) {
 
 
 void Fac::to_json(json &j, const Factory &r) {
+    j["id"] = r.getId();
     j["entities"] = json::array();
 
     // Loop through each entity in the vector
@@ -221,6 +222,7 @@ void Fac::to_json(json &j, const Factory &r) {
 void Fac::from_json(const json &j, Factory &r) {
     r._entities.clear();
     r._entity_map.clear();
+    r.id = j.at("id").get<int>();
 
     // Loop through each entity in the JSON array
     for (const auto &entity_json: j["entities"]) {
