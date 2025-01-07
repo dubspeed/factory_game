@@ -3,12 +3,13 @@
 #include <functional>
 #include <map>
 
-
 enum WindowType {
     OVERVIEW,
     FACTORY_DETAIL,
     DEMO,
 };
+
+inline static int constexpr DEFAULT_ID = 10000;
 
 class Window {
 public:
@@ -22,36 +23,20 @@ using ConstructorFunction = std::variant<
     std::function<std::unique_ptr<Window>(int)>
 >;
 
-// using RenderFunction = const std::function<void(const std::unique_ptr<bool> &p_open)>;
-
 template<typename T>
 inline constexpr bool always_false = false;
 
 struct WindowInfo {
+    int window_id = 0;
     ConstructorFunction constructor_function;
     std::shared_ptr<bool> is_open = std::make_shared<bool>(true);
     std::unique_ptr<Window> instance = nullptr;
-
-    void createInstance() {
+    
+    void createInstance(const int id=0) {
         if (instance != nullptr) return;
 
-        instance = std::visit([](const auto &f)-> std::unique_ptr<Window> {
-            using F = std::decay_t<decltype(f)>;
-            if constexpr (std::is_same_v<F, std::function<std::unique_ptr<Window>()> >) {
-                return f();
-            } else if constexpr (std::is_same_v<F, std::function<std::unique_ptr<Window>(int)> >) {
-                return f(0);
-            } else {
-                static_assert(always_false<F>, "Unsupported function type");
-            }
-        }, constructor_function);
-    }
-
-    void createInstance(const int id) {
-        if (instance != nullptr) return;
-
-        instance = std::visit([&](const auto &f)-> std::unique_ptr<Window> {
-            using F = std::decay_t<decltype(f)>;
+        instance = std::visit([&]<typename T>(const T &f)-> std::unique_ptr<Window> {
+            using F = std::decay_t<T>;
             if constexpr (std::is_same_v<F, std::function<std::unique_ptr<Window>()> >) {
                 return f();
             } else if constexpr (std::is_same_v<F, std::function<std::unique_ptr<Window>(int)> >) {
@@ -72,47 +57,52 @@ struct WindowInfo {
 class FactoryOverviewWindow;
 
 struct Navigation {
-    std::map<WindowType, WindowInfo> windows;
+    std::map<WindowType, ConstructorFunction> constructors;
+    std::map<WindowType, std::map<int, WindowInfo>> windows;
 
     void registerWindow(
         WindowType const type,
         const std::function<std::unique_ptr<Window>()> &constructorFunction) {
-        windows[type] = {constructorFunction};
+        constructors[type] = constructorFunction;
     }
 
     void registerWindow(
         WindowType const type,
         const std::function<std::unique_ptr<Window>(int)> &constructorFunction) {
-        windows[type] = {constructorFunction};
+        constructors[type] = constructorFunction;
     }
 
-    void openWindow(WindowType const type) {
-        if (windows.contains(type)) {
-            windows[type].is_open = std::make_unique<bool>(true);
-            windows[type].createInstance();
-        }
-    }
-
-    void openWindow(WindowType const type, int const id) {
-        if (windows.contains(type)) {
-            windows[type].is_open = std::make_shared<bool>(true);
-            windows[type].createInstance(id);
+    void openWindow(WindowType const type, int const id = DEFAULT_ID) {
+        if (constructors.contains(type)) {
+            if (windows[type].contains(id)) {
+                *windows[type][id].is_open = true;
+            } else {
+                windows[type][id] = {id, constructors[type]};
+                windows[type][id].createInstance(id);
+            }
         }
     }
 
     // Render all windows
     void render() {
-        for (auto &val: windows | std::views::values) {
-            if (val.instance != nullptr && *val.is_open == true)
-                val.render();
+        for (auto &idmap: windows | std::views::values) {
+            for (auto &val: idmap | std::views::values) {
+                if (val.instance != nullptr && *val.is_open == true)
+                    val.render();
+            }
         }
     }
 
     std::shared_ptr<bool> getWindowOpenState(WindowType const type) {
+        return getWindowOpenState(type, DEFAULT_ID);
+    }
+
+    std::shared_ptr<bool> getWindowOpenState(WindowType const type, const int id) {
         if (windows.contains(type)) {
-            return windows[type].is_open;
+            return windows[type][id].is_open;
         }
         return nullptr;
     }
+
 };
 #endif //NAVIGATION_H

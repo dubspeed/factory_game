@@ -51,11 +51,12 @@ public:
 
 
     void render(const std::shared_ptr<bool> &is_open) const override {
-        if (!ImGui::Begin("Factory Detail", is_open.get(), ImGuiWindowFlags_AlwaysAutoResize)) {
+        auto id = view_model.factory->getId();
+        if (!ImGui::Begin(STR("Factory Detail##{0}", id), is_open.get(), ImGuiWindowFlags_AlwaysAutoResize)) {
             ImGui::End();
             return;
         }
-        ImGui::Text(STR("Factory Id: {0}", view_model.factory->getId()));
+        ImGui::Text(STR("Factory Id: {0}", id));
 
         if (ImGui::BeginTabBar("##tabs")) {
             if (ImGui::BeginTabItem("All")) {
