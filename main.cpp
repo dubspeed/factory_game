@@ -9,12 +9,14 @@
 #include <imgui.h>
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_sdlrenderer3.h>
-#include <stdio.h>
 #include <SDL3/SDL.h>
 #include <string>
 #include "src/tools/defer.h"
 #include "nlohmann/json.hpp"
 #include "src/dsl/examples.h"
+#include "src/game/navigation.h"
+#include "src/game/factory_detail.h"
+#include "src/tools/gui.h"
 
 using namespace Fac;
 using json = nlohmann::json;
@@ -107,20 +109,6 @@ int setupImGui() {
 }
 
 
-std::string camelCaseToSpaced(std::string text) {
-    std::string result;
-    result.reserve(text.length() + 5); // Reserve some extra space for potential spaces
-
-    for (size_t i = 0; i < text.length(); ++i) {
-        if (i > 0 && std::isupper(text[i]) && !std::isupper(text[i - 1])) {
-            result += ' ';
-        }
-        result += text[i];
-    }
-
-    return result;
-}
-
 
 int main(int argc, char *argv[]) {
     std::signal(SIGINT, signal_handler); // CTRL-C
@@ -162,8 +150,22 @@ int main(int argc, char *argv[]) {
 
     constexpr auto clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    auto gameWindowViewModel = GameWindowViewModel(gameState, gameState.factories.front());
-    auto gameWindow = GameWindow(gameWindowViewModel);
+
+    auto navigation = Navigation();
+    navigation.registerWindow(OVERVIEW, [&] {
+        auto view_model = FactoryOverviewWindowViewModel(gameState, navigation);
+        // copy viewmodel to the window to transport ownership, otherwise it would be removed at the end of the closure
+        return std::make_unique<FactoryOverviewWindow>(view_model);
+    });
+
+    navigation.registerWindow(FACTORY_DETAIL, [&](int id) {
+        auto view_model = FactoryDetailWindowViewModel{gameState.factories.at(id)};
+        return std::make_unique<FactoryDetailWindow>(view_model);
+    });
+
+    navigation.openWindow(OVERVIEW);
+
+    auto show_demo = false;
 
     while (!stop) {
         auto const currentTime = Clock::now();
@@ -197,70 +199,19 @@ int main(int argc, char *argv[]) {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
+        // render all windows
+        navigation.render();
+        if (show_demo) ImGui::ShowDemoWindow(&show_demo);
 
-        ImGui::ShowDemoWindow();
-
-        gameWindow.render();
-
-        auto showFactoryList = []() {
-            if (ImGui::BeginTable("table1", 7)) {
-                for (auto &entity: gameState.factories.front()->getEntities()) {
-                    // if (auto gameEntity = std::dynamic_pointer_cast<GameWorldEntity>(entity)) {
-                    //     ImGui::Text(std::format("Entity: {0} {1}", entity->getId(), entity->name).c_str());
-                    //     ImGui::Separator();
-                    // }
-                    ImGui::TableNextRow();
-                    if (const auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
-                        ImGui::TableNextColumn();
-                        ImGui::Checkbox(std::format("##{0}", m->getId()).c_str(), &m->processing);
-                        ImGui::TableNextColumn();
-                        ImGui::ProgressBar(m->processing_progress / (m->getRecipe().value().processing_time_s * 1000));
-                        ImGui::TableNextColumn();
-                        auto resourceName = camelCaseToSpaced(
-                            resourceToString(m->getRecipe().value().products.front().resource).data());
-                        ImGui::Text(resourceName.c_str());
-                        ImGui::TableNextColumn();
-                        ImGui::Text(std::format("Mach: {0} {1}", m->getId(), m->name).c_str());
-                        for (int i = 0; i < m->getInputSlots(); i++) {
-                            ImGui::TableNextColumn();
-                            ImGui::Text(std::format("I{0}: {1}", i, m->getInputStack(i)->getAmount()).c_str());
-                        }
-                        for (int i = 0; i < m->getOutputSlots(); i++) {
-                            ImGui::TableNextColumn();
-                            ImGui::Text(std::format("O{0}: {1}", i, m->getOutputStack(i)->getAmount()).c_str());
-                        }
-                        ImGui::TableNextColumn();
-                        // ImGui::Text(std::format("P: {0}", m->processing).c_str());
-                        ImGui::Text(std::format("PPM: {0}", m->getInputRpm()).c_str());
-
-                        // ImGui::Text(std::format("T: {0}", m->getRecipe().value().processing_time_s * 1000 - m->processing_progress).c_str());
-                    }
-                }
-                ImGui::EndTable();
-            }
-        };
-
-
-        ImGui::Begin("Factory Overview");
-
+        // Ends up in the DEBUG window
         ImGui::Text(std::format("Time: {0}s", elapsed.count()).c_str());
 
-        if (ImGui::BeginTabBar("##tabs")) {
-            if (ImGui::BeginTabItem("All")) {
-                showFactoryList();
-                ImGui::EndTabItem();
-            }
+        if (Gui::StatefulButton("Factory Overview", navigation.getWindowOpenState(OVERVIEW))) {
+            navigation.openWindow(OVERVIEW);
+        }
 
-            if (ImGui::BeginTabItem("Machines")) {
-                ImGui::Text("Machines");
-                ImGui::EndTabItem();
-            }
+        Gui::StatefulButton("Demo Window", &show_demo);
 
-            ImGui::EndTabBar();
-        };
-
-
-        ImGui::End();
 
         //     if (auto m = std::dynamic_pointer_cast<Machine>(entity); m) {
         //         std::cout << "Mach:" << std::setw(2) << m->getId() << " " << m->name;

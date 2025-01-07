@@ -1,7 +1,3 @@
-//
-// Created by Michael Engel on 23.12.24.
-//
-
 #ifndef SERIALIZATION_H
 #define SERIALIZATION_H
 

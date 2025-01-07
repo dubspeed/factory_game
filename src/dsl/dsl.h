@@ -1,7 +1,3 @@
-//
-// Created by Michael Engel on 03.01.25.
-//
-
 #ifndef DSL_H
 #define DSL_H
 

@@ -2,12 +2,11 @@
 #define SIM_H
 
 #include <functional>
-#include <memory>
 #include "core.h"
 #include "storage.h"
 
 namespace Fac {
-    typedef std::vector<std::variant<
+    using GameWorldEntities = std::vector<std::variant<
         std::shared_ptr<Stack>,
         std::shared_ptr<Machine>,
         std::shared_ptr<Belt>,
@@ -16,8 +15,7 @@ namespace Fac {
         std::shared_ptr<ResourceNode>,
         std::shared_ptr<Extractor>,
         std::shared_ptr<Storage>
-    > > GameWorldEntities;
-
+    > >;
 
     struct EntityObserver {
         int id;
