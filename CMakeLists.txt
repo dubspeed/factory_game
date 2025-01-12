@@ -80,14 +80,15 @@ add_executable(factory_game
         src/serialization.h
         src/game/game.h
         src/tools/defer.h
+        src/tools/gui.h
+        src/tools/gui.cpp
+        src/tools/format.h
         src/dsl/dsl.h
         src/dsl/examples.cpp
         src/dsl/examples.h
         src/game/navigation.h
+        src/game/factory_overview.h
         src/game/factory_detail.h
-        src/tools/gui.h
-        src/tools/gui.cpp
-        src/tools/format.h
 )
 
 add_executable(generators

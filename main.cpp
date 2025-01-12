@@ -15,6 +15,7 @@
 #include "nlohmann/json.hpp"
 #include "src/dsl/examples.h"
 #include "src/game/navigation.h"
+#include "src/game/factory_overview.h"
 #include "src/game/factory_detail.h"
 #include "src/tools/gui.h"
 
@@ -59,7 +60,7 @@ int setupImGui() {
 
     // Create window with SDL_Renderer graphics context
     Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
-    window = SDL_CreateWindow("Dear ImGui SDL3+SDL_Renderer example", 1280, 720, window_flags);
+    window = SDL_CreateWindow("Factory", 1280, 720, window_flags);
     if (window == nullptr) {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return -1;
@@ -131,17 +132,15 @@ int main(int argc, char *argv[]) {
         std::cout << "Loaded world from file\n";
         i.close();
     } else {
-        // setupGameWorldSimple();
-        gameState.factories.push_back(std::make_shared<Factory>());
-        // Examples::complexFactory(gameState.factories.front());
-        Examples::simpleFactory(gameState.factories.front());
+        auto factory = std::make_shared<Factory>();
+        gameState.addFactory(factory);
+        Examples::starterFactory(factory);
         std::cout << "Created new world\n";
     }
 
     std::cout << "Running... (Press CTRL-D or CTRL-C to exit)\n";
 
     using Clock = std::chrono::steady_clock;
-    using TimePoint = std::chrono::time_point<Clock>;
     auto const startTime = Clock::now();
 
     if (setupImGui() != 0) {
@@ -158,8 +157,9 @@ int main(int argc, char *argv[]) {
         return std::make_unique<FactoryOverviewWindow>(view_model);
     });
 
-    navigation.registerWindow(FACTORY_DETAIL, [&](int id) {
-        auto view_model = FactoryDetailWindowViewModel{gameState.factories.at(id)};
+    navigation.registerWindow(FACTORY_DETAIL, [&](int const id) {
+        auto const factory = gameState.getFactoryById(id);
+        auto view_model = FactoryDetailWindowViewModel{factory};
         return std::make_unique<FactoryDetailWindow>(view_model);
     });
 
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Factory logic
-        for (const auto &factory : gameState.factories) {
+        for (const auto &factory : gameState.getFactories()) {
             factory->processWorldStep();
         }
 

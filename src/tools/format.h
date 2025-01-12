@@ -3,7 +3,7 @@
 
 #define STR(x, ...) std::format(x, __VA_ARGS__).c_str()
 
-inline std::string camelCaseToSpaced(std::string const &text) {
+constexpr std::string camelCaseToSpaced(std::string const &text) {
     std::string result;
     result.reserve(text.length() + 5); // Reserve some extra space for potential spaces
 

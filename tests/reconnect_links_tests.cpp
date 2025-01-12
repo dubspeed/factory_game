@@ -36,6 +36,7 @@ TEST(ReconnectLinks, SingleMachineBelt) {
 TEST(ReconnectLinks, ResourceNodeResourceExtractorBelt) {
     auto w = Factory();
     const auto n = std::make_shared<ResourceNode>(ResourceNode());
+    n->setResource(Resource::IronOre);
     const auto e = std::make_shared<Extractor>(Extractor());
     const auto belt = std::make_shared<Belt>(Belt(1));
     e->setResourceNode(n);

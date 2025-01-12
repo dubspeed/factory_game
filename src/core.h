@@ -18,6 +18,18 @@ namespace Fac {
         Impure,
     };
 
+    constexpr std::string_view resourceQualityToString(ResourceQuality const &r) {
+        switch (r) {
+            case ResourceQuality::Normal:
+                return "Normal";
+            case ResourceQuality::Pure:
+                return "Pure";
+            case ResourceQuality::Impure:
+                return "Impure";
+        }
+        return "Unknown";
+    }
+
     std::map<ResourceQuality, float> const resource_quality_multiplier = {
         {ResourceQuality::Normal, 1.0},
         {ResourceQuality::Pure, 2.0},
@@ -278,19 +290,19 @@ namespace Fac {
         ResourceNode() = default;
 
         void setResource(Resource const &r, ResourceQuality const quality) {
-            _active_resource = r;
+            _resource = r;
             _quality = quality;
         }
 
         void setResource(Resource const &r) {
-            _active_resource = r;
+            _resource = r;
         }
 
         void setResourceQuality(ResourceQuality const quality) {
             _quality = quality;
         }
 
-        [[nodiscard]] Resource getResource() const { return _active_resource; }
+        [[nodiscard]] Resource getResource() const { return _resource; }
         [[nodiscard]] ResourceQuality getQuality() const { return _quality; }
 
         void update(double dt) override {
@@ -300,8 +312,8 @@ namespace Fac {
 
     private:
         int _id = generate_id();
-        Resource _active_resource;
-        ResourceQuality _quality;
+        Resource _resource = Resource::None;
+        ResourceQuality _quality = ResourceQuality::Normal;
     };
 
 
@@ -328,14 +340,26 @@ namespace Fac {
             return _default_extraction_speed;
         }
 
-        void setResourceNode(std::shared_ptr<ResourceNode> const &depot) {
-            _res_node = depot;
-            _res_node_id = depot->getId();
+        void setResourceNode(std::shared_ptr<ResourceNode> const &node) {
+            _res_node = node;
+            _res_node_id = node->getId();
+            _output_stacks.at(0)->clear();
             _output_stacks.at(0)->lockResource(_res_node->getResource());
             update_extraction_speed();
         }
 
-        [[nodiscard]] std::shared_ptr<ResourceNode> getResourceNode() const { return _res_node; };
+        void clearResourceNode() {
+            setResourceNode(std::make_shared<ResourceNode>());
+            _res_node_id = -1;
+            extracting = false;
+            extraction_progress = 0.0;
+        }
+
+        [[nodiscard]] std::shared_ptr<ResourceNode> getResourceNode() const { return _res_node; }
+
+        bool hasResourceNode() const {
+            return _res_node_id > -1;
+        }
 
         void update(double dt) override;
 
@@ -344,8 +368,13 @@ namespace Fac {
         void reconnectLinks(
             std::function<std::optional<std::shared_ptr<GameWorldEntity> >(int)> const &getEntityById) override {
             if (_res_node_id > -1) {
-                if (auto const node = getEntityById(_res_node_id); node.has_value())
-                    setResourceNode(std::dynamic_pointer_cast<ResourceNode>(node.value()));
+                if (auto const node = getEntityById(_res_node_id); node.has_value()) {
+                    auto const n = std::dynamic_pointer_cast<ResourceNode>(node.value());
+                    _res_node = n;
+                    _res_node_id = n->getId();
+                    _output_stacks.at(0)->lockResource(_res_node->getResource());
+                    update_extraction_speed();
+                }
             }
         }
 
@@ -364,7 +393,7 @@ namespace Fac {
 
         int _id = generate_id();
         int _res_node_id = -1;
-        std::shared_ptr<ResourceNode> _res_node;
+        std::shared_ptr<ResourceNode> _res_node = std::make_shared<ResourceNode>();
         int _extraction_speed = 60;
         int _default_extraction_speed = 60;
     };
@@ -474,11 +503,11 @@ namespace Fac {
     };
 
 
-    class Belt : public GameWorldEntity, public ItemMover {
+    class Belt final : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Belt &r);
 
     public:
-        Belt(int const items_per_s = 1): ItemMover(1, 1, items_per_s) {
+        explicit Belt(int const items_per_s = 1): ItemMover(1, 1, items_per_s) {
         }
 
         void update(double dt) override;
@@ -493,7 +522,7 @@ namespace Fac {
     // TODO maybe the splitter can be a belt with a special case
     // TODO also consider the merger, which is the opposite of the splitter
     // a splitter has one input and two or more outputs
-    class Splitter : public GameWorldEntity, public ItemMover {
+    class Splitter final : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Splitter &r);
 
     public:
@@ -510,7 +539,7 @@ namespace Fac {
     };
 
 
-    class Merger : public GameWorldEntity, public ItemMover {
+    class Merger final : public GameWorldEntity, public ItemMover {
         friend void from_json(const json &j, Merger &r);
 
     public:

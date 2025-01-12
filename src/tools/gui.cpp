@@ -2,6 +2,9 @@
 #include "imgui.h"
 
 bool Gui::StatefulButton(std::string const &label, bool *state, const ImVec2 &size) {
+    if (state == nullptr) {
+        return ImGui::Button(label.c_str(), size);
+    }
     if (*state) {
         ImGui::BeginDisabled(true);
         ImGui::Button(label.c_str(), size);

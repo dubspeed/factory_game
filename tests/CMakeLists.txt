@@ -50,7 +50,7 @@ add_executable(
         storage_tests.cpp
         ../src/factory.h
         json_tests.cpp
-        gameworld_tests.cpp
+        factory_tests.cpp
         ../src/serialization.cpp
         reconnect_links_tests.cpp
         ../src/serialization.h

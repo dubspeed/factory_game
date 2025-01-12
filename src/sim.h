@@ -2,11 +2,13 @@
 #define SIM_H
 
 #include <functional>
+#include <typeindex>
+
 #include "core.h"
 #include "storage.h"
 
 namespace Fac {
-    using GameWorldEntities = std::vector<std::variant<
+    using EntityVariant = std::variant<
         std::shared_ptr<Stack>,
         std::shared_ptr<Machine>,
         std::shared_ptr<Belt>,
@@ -15,7 +17,9 @@ namespace Fac {
         std::shared_ptr<ResourceNode>,
         std::shared_ptr<Extractor>,
         std::shared_ptr<Storage>
-    > >;
+    >;
+
+    using GameWorldEntities = std::vector<EntityVariant>;
 
     struct EntityObserver {
         int id;
@@ -42,8 +46,33 @@ namespace Fac {
         }
 
         // return the cast entity by id
-        [[nodiscard]] std::optional<std::shared_ptr<GameWorldEntity>> getEntityById(int const id) const {
+        [[nodiscard]] std::optional<std::shared_ptr<GameWorldEntity> > getEntityById(int const id) const {
             return _entity_map.contains(id) ? std::make_optional(_entity_map.at(id)) : std::nullopt;
+        }
+
+        // TODO optimization: cache the entities by type
+        [[nodiscard]] std::vector<std::shared_ptr<GameWorldEntity> > getEntitiesByType(
+            std::type_index const &type) const {
+            std::vector<std::shared_ptr<GameWorldEntity> > result;
+            for (const auto &val: _entity_map | std::views::values) {
+                const GameWorldEntity *ptr = val.get();
+                if (std::type_index(typeid(*ptr)) == type) {
+                    result.push_back(val);
+                }
+            }
+            return result;
+        }
+
+        template <typename T>
+        requires std::derived_from<T, GameWorldEntity>
+        [[nodiscard]] std::vector<std::shared_ptr<T> > getEntitiesByType() const {
+            auto gameWorlddEntities = getEntitiesByType(typeid(T));
+            std::vector<std::shared_ptr<T> > result;
+            result.reserve(gameWorlddEntities.size());
+            for (const auto &entity: gameWorlddEntities) {
+                result.push_back(std::dynamic_pointer_cast<T>(entity));
+            }
+            return result;
         }
 
         // templates need to be available at compile time, not just at link time, so

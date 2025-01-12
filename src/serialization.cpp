@@ -21,10 +21,10 @@ void Fac::from_json(const json &j, Machine &r) {
     r._id = j.at("machine").at("id").get<int>();
     r._input_slots = j.at("machine").at("inp_slots").get<int>();
     r._output_slots = j.at("machine").at("out_slots").get<int>();
+    r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
     r._input_connections = j.at("machine").at("input").get<std::vector<BufferedConnection> >();
     r._output_stacks = j.at("machine").at("output").at("_output_stacks").get<std::vector<std::shared_ptr<Stack> > >();
     r.name = j.at("machine").at("name").get<std::string>();
-    r.setRecipe(j.at("machine").at("recipe").get<Recipe>());
 }
 
 void Fac::to_json(json &j, const InputConnection &r) {

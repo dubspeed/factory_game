@@ -99,7 +99,7 @@ struct Navigation {
 
     std::shared_ptr<bool> getWindowOpenState(WindowType const type, const int id) {
         if (windows.contains(type)) {
-            return windows[type][id].is_open;
+            if (windows[type].contains(id)) return windows[type][id].is_open;
         }
         return nullptr;
     }

@@ -291,13 +291,17 @@ void Merger::update(double dt) {
 }
 
 void Extractor::update(double const dt) {
+    if (_res_node->getResource() == Resource::None) {
+        return;
+    }
+
     if (extracting) {
         extraction_progress += dt;
     }
 
     if (!extracting) {
         // can we start extracting?
-        if (getOutputStack(0)->getAmount() <= MAX_STACK_SIZE) {
+        if (getOutputStack(0)->getAmount() < MAX_STACK_SIZE) {
             extracting = true;
         }
         extraction_progress = 0.0;

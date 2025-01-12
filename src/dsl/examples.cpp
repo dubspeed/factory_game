@@ -5,6 +5,16 @@
 using namespace DSL;
 using namespace Fac;
 
+void Examples::starterFactory(std::shared_ptr<Factory> const &factory) {
+    SET_FACTORY(factory);
+    RESOURCE_NODE(iron_node, IronOre, Impure);
+    RESOURCE_NODE(copper_node, CopperOre, Impure);
+
+    EXTRACTOR_T1(iron_extractor, iron_node);
+    create(fac, Extractor());
+}
+
+
 void Examples::simpleFactory(std::shared_ptr<Factory> const &factory) {
     SET_FACTORY(factory);
     SMALL_STORAGE(plates);
@@ -20,8 +30,6 @@ void Examples::simpleFactory(std::shared_ptr<Factory> const &factory) {
 
     SMALL_STORAGE(reinforced_plates_storage);
     LINK_T1(FROM_SLOT0(reinforced_plate), TO_SLOT0(reinforced_plates_storage));
-
-    std::cout << "Setup complete\n";
 }
 
 
